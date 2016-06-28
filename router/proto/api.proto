@@ -1,0 +1,14 @@
+syntax = "proto2";
+
+package nagax.router.api;
+
+message Error {
+  optional string code = 1;
+  optional string title = 2;
+  optional string detail = 3; // optional long message
+  optional string field = 4; // optionally indicate field with error
+}
+message ErrorResponse {
+  repeated Error errors = 1;
+}
+
