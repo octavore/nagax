@@ -1,0 +1,9 @@
+{
+  "migrations": "migrations",
+  "datasources": {
+    "test": {
+      "driver": "postgres",
+      "dsn": "postgres://localhost:5432/migrate_test?sslmode=disable"
+    }
+  }
+}
