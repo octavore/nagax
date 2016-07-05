@@ -122,10 +122,10 @@ func (m *Module) Reset(dbname string) error {
 	u.RawPath = "template1"
 
 	db, err := sql.Open(ds.Driver, u.String())
-	defer db.Close()
 	if err != nil {
 		return err
 	}
+	defer db.Close()
 	_, err = db.Exec(`DROP DATABASE IF EXISTS ` + database)
 	if err != nil {
 		return err
