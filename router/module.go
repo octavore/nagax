@@ -22,7 +22,7 @@ func (r *Module) Init(c *service.Config) {
 	c.Start = func() {
 		laddr := "127.0.0.1:8000"
 		log.Println("listening on", laddr)
-		http.ListenAndServe(laddr, r)
+		go http.ListenAndServe(laddr, r)
 	}
 }
 
