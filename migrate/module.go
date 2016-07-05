@@ -33,12 +33,28 @@ type Datasource struct {
 	DSN    string `json:"dsn"`
 }
 
+func (m *Module) PrintHelp(ctx *service.CommandContext) {
+	if len(ctx.Args) != 1 {
+		fmt.Println("Please specify a db:")
+		if len(m.config.Datasources) == 0 {
+			fmt.Println("  no databases found!")
+		} else {
+			for ds, _ := range m.config.Datasources {
+				fmt.Println("  " + ds)
+			}
+		}
+		ctx.UsageExit()
+	}
+}
+
 func (m *Module) Init(c *service.Config) {
 	c.AddCommand(&service.Command{
 		Keyword:    "db:migrate <db>",
 		ShortUsage: "run db migrations",
 		Run: func(ctx *service.CommandContext) {
-			ctx.RequireExactlyNArgs(1)
+			if len(ctx.Args) != 1 {
+				m.PrintHelp(ctx)
+			}
 			err := m.Migrate(ctx.Args[0])
 			if err != nil {
 				log.Println("migrate:", err)
@@ -50,7 +66,9 @@ func (m *Module) Init(c *service.Config) {
 		Keyword:    "db:reset <db>",
 		ShortUsage: "reset database",
 		Run: func(ctx *service.CommandContext) {
-			ctx.RequireExactlyNArgs(1)
+			if len(ctx.Args) != 1 {
+				m.PrintHelp(ctx)
+			}
 			dbname := ctx.Args[0]
 			err := m.Reset(dbname)
 			if err != nil {
