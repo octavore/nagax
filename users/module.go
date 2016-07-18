@@ -50,6 +50,8 @@ type Module struct {
 	CookieDomain string
 }
 
+var _ service.Module = &Module{}
+
 // Configure needs to be called in setup step; todo: make this less weird.
 func (m *Module) Configure(
 	k KeyStore, u UserStore, config *oauth2.Config, redirectURL string,
@@ -62,8 +64,6 @@ func (m *Module) Configure(
 	m.ErrorHandler = errHandler
 }
 
-var _ service.Module = &Module{}
-
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.setupRoutes()
@@ -72,11 +72,11 @@ func (m *Module) Init(c *service.Config) {
 
 	// todo: move this to Setup after figuring out a way to ensure Configure runs first?
 	c.Start = func() {
-		priv, err := m.KeyStore.LoadPrivateKey()
+		privateKey, err := m.KeyStore.LoadPrivateKey()
 		if err != nil {
 			panic(err)
 		}
-		m.decryptionKey, err = jose.LoadPrivateKey(priv)
+		m.decryptionKey, err = jose.LoadPrivateKey(privateKey)
 		if err != nil {
 			panic(err)
 		}

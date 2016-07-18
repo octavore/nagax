@@ -49,7 +49,7 @@ func (m *Module) Authenticate(req *http.Request) (string, error) {
 
 	b, err := obj.Decrypt(m.decryptionKey)
 	session := userSession{}
-	if err := json.Unmarshal(b, &session); err != nil {
+	if err = json.Unmarshal(b, &session); err != nil {
 		return "", err
 	}
 
