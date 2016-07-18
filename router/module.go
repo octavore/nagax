@@ -1,26 +1,40 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/octavore/naga/service"
+	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/proto/nagax/router/api"
 )
 
+type Config struct {
+	Port int `json:"port"`
+}
+
 type Module struct {
 	*http.ServeMux
+	Config *config.Module
+	config Config
 }
 
 func (r *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		r.ServeMux = http.NewServeMux()
+		r.Config.ReadConfig(&r.config)
 		return nil
 	}
 	c.Start = func() {
-		laddr := "127.0.0.1:8000"
+		port := 8000
+		if r.config.Port != 0 {
+			port = r.config.Port
+		}
+		laddr := fmt.Sprintf("127.0.0.1:%d", port)
 		log.Println("listening on", laddr)
 		go http.ListenAndServe(laddr, r)
 	}
