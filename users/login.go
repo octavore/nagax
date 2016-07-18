@@ -30,6 +30,8 @@ func (m *Module) GetLoginCookie(userID string) (*http.Cookie, error) {
 		HttpOnly: true,
 		Path:     "/",
 		MaxAge:   86400,
+		Domain:   m.CookieDomain,
+		Secure:   m.SecureCookie,
 	}, nil
 }
 

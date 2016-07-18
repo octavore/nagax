@@ -45,6 +45,9 @@ type Module struct {
 	OAuthRedirect string
 	KeyStore      KeyStore
 	UserStore     UserStore
+
+	SecureCookie bool
+	CookieDomain string
 }
 
 // Configure needs to be called in setup step; todo: make this less weird.
