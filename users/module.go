@@ -55,9 +55,10 @@ var _ service.Module = &Module{}
 // Configure needs to be called in setup step; todo: make this less weird.
 func (m *Module) Configure(
 	k KeyStore, u UserStore, config *oauth2.Config, redirectURL string,
-	errHandler func(http.ResponseWriter, *http.Request, error),
+	errHandler func(http.ResponseWriter, *http.Request, error), options ...oauth2.AuthCodeOption,
 ) {
 	m.oauthConfig = config
+	m.oauthOptions = options
 	m.OAuthRedirect = redirectURL
 	m.KeyStore = k
 	m.UserStore = u
