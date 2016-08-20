@@ -2,6 +2,7 @@ package users
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/octavore/naga/service"
 	"github.com/octavore/nagax/router"
@@ -11,14 +12,15 @@ import (
 
 // default values
 var (
-	OAuthState        string                 = "state"
-	CookieName        string                 = "session"
-	KeyAlgorithm      jose.KeyAlgorithm      = jose.RSA_OAEP
-	ContentEncryption jose.ContentEncryption = jose.A128GCM
+	OAuthState        = "state"
+	CookieName        = "session"
+	KeyAlgorithm      = jose.RSA_OAEP
+	ContentEncryption = jose.A128GCM
 )
 
 type userSession struct {
-	ID string `json:"user_id"`
+	ID        string `json:"user_id"`
+	SessionID string `json:"session_id"`
 }
 
 type UserStore interface {
@@ -46,13 +48,18 @@ type Module struct {
 	KeyStore      KeyStore
 	UserStore     UserStore
 
+	RevocationStore         RevocationStore
+	revocationTrackDuration time.Duration
+	sessionValidityDuration time.Duration
+
 	SecureCookie bool
 	CookieDomain string
 }
 
 var _ service.Module = &Module{}
 
-// Configure needs to be called in setup step; todo: make this less weird.
+// Configure needs to be called in setup step (IMPORTANT)
+// TODO: make this less weird.
 func (m *Module) Configure(
 	k KeyStore, u UserStore, config *oauth2.Config, redirectURL string,
 	errHandler func(http.ResponseWriter, *http.Request, error), options ...oauth2.AuthCodeOption,
@@ -65,8 +72,19 @@ func (m *Module) Configure(
 	m.ErrorHandler = errHandler
 }
 
+// Init implements the Module interface method
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
+		memStore := &InMemoryRevocationStore{
+			revoked:       map[string]time.Time{},
+			flushInterval: time.Hour,
+		}
+		memStore.Start()
+		m.RevocationStore = memStore
+
+		m.revocationTrackDuration = time.Hour * 24 * 7 // track revoked sessions for a week
+		m.sessionValidityDuration = time.Hour * 48     // session is valid for two days
+
 		m.setupRoutes()
 		return nil
 	}

@@ -1,12 +1,12 @@
 package users
 
 import (
-	"log"
 	"net/http"
 
 	"golang.org/x/oauth2"
 )
 
+// URLS for the oauth handlers
 const (
 	OAuthStartURL    = "/oauth/start"
 	OAuthCallbackURL = "/oauth/callback"
@@ -18,6 +18,7 @@ func (m *Module) setupRoutes() {
 }
 
 func (m *Module) handleOAuthStart(rw http.ResponseWriter, req *http.Request) {
+	// TODO: store something in the state for next url
 	url := m.oauthConfig.AuthCodeURL(OAuthState, m.oauthOptions...)
 	http.Redirect(rw, req, url, http.StatusTemporaryRedirect)
 }
@@ -45,7 +46,7 @@ func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	cookie, err := m.GetLoginCookie(userID)
+	cookie, err := m.NewSessionCookie(userID)
 	if err != nil {
 		m.ErrorHandler(rw, req, err)
 		return
