@@ -79,7 +79,6 @@ func (m *Module) Init(c *service.Config) {
 			revoked:       map[string]time.Time{},
 			flushInterval: time.Hour,
 		}
-		memStore.Start()
 		m.RevocationStore = memStore
 
 		m.revocationTrackDuration = time.Hour * 24 * 7 // track revoked sessions for a week
@@ -112,6 +111,10 @@ func (m *Module) Init(c *service.Config) {
 		m.encrypter, err = jose.NewEncrypter(KeyAlgorithm, ContentEncryption, publicKey)
 		if err != nil {
 			panic(err)
+		}
+		s, ok := m.RevocationStore.(*InMemoryRevocationStore)
+		if ok {
+			go s.Start()
 		}
 	}
 }
