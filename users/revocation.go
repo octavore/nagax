@@ -47,9 +47,7 @@ func (s *InMemoryRevocationStore) Revoke(id string, trackFor time.Duration) {
 
 // IsRevoked implements the interface method
 func (s *InMemoryRevocationStore) IsRevoked(id string) bool {
-	t, ok := s.revoked[id]
-	if !ok {
-		return false // if not in the store, assume that login token is valid
-	}
-	return time.Now().After(t)
+	_, inStore := s.revoked[id]
+	// if in store, assume revoked
+	return inStore
 }

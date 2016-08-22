@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,10 +12,14 @@ import (
 
 // NewSessionCookie returns a new session cookie
 func (m *Module) NewSessionCookie(userID string) (*http.Cookie, error) {
-	b, err := json.Marshal(userSession{
+	return m.newSessionCookie(&userSession{
 		ID:        userID,
 		SessionID: fmt.Sprintf("%s-%s", userID, time.Now().String()),
 	})
+}
+
+func (m *Module) newSessionCookie(u *userSession) (*http.Cookie, error) {
+	b, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +61,9 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*userSession, error) 
 	if err = json.Unmarshal(b, session); err != nil {
 		return nil, err
 	}
+	if m.RevocationStore.IsRevoked(session.SessionID) {
+		return nil, errors.New("invalid session")
+	}
 
 	return session, nil
 }
@@ -67,4 +75,19 @@ func (m *Module) Authenticate(req *http.Request) (string, error) {
 		return "", err
 	}
 	return session.ID, nil
+}
+
+// AuthenticateAndExtend authenticates a cookie based session and
+// refreshes the validity period.
+func (m *Module) AuthenticateAndExtend(rw http.ResponseWriter, req *http.Request) (string, error) {
+	userSession, err := m.getSessionFromRequest(req)
+	if err != nil {
+		return "", err
+	}
+
+	cookie, err := m.newSessionCookie(userSession)
+	if err == nil {
+		rw.Header().Add("Set-Cookie", cookie.String())
+	}
+	return userSession.ID, nil
 }

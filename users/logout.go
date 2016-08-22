@@ -12,7 +12,7 @@ func (m *Module) HandleLogout(rw http.ResponseWriter, req *http.Request) {
 		// TODO: log error
 		return
 	}
-	m.RevocationStore.Revoke(session.ID, m.revocationTrackDuration)
+	m.RevocationStore.Revoke(session.SessionID, m.revocationTrackDuration)
 	http.SetCookie(rw, &http.Cookie{
 		Name:     CookieName,
 		MaxAge:   -1,
