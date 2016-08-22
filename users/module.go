@@ -52,6 +52,9 @@ type Module struct {
 	revocationTrackDuration time.Duration
 	sessionValidityDuration time.Duration
 
+	// optional function which returns the state used for an oauth request
+	oauthState func(req *http.Request) string
+
 	SecureCookie bool
 	CookieDomain string
 }
@@ -62,7 +65,9 @@ var _ service.Module = &Module{}
 // TODO: make this less weird.
 func (m *Module) Configure(
 	k KeyStore, u UserStore, config *oauth2.Config, redirectURL string,
-	errHandler func(http.ResponseWriter, *http.Request, error), options ...oauth2.AuthCodeOption,
+	errHandler func(http.ResponseWriter, *http.Request, error),
+	oauthState func(req *http.Request) string,
+	options ...oauth2.AuthCodeOption,
 ) {
 	m.oauthConfig = config
 	m.oauthOptions = options
@@ -70,6 +75,7 @@ func (m *Module) Configure(
 	m.KeyStore = k
 	m.UserStore = u
 	m.ErrorHandler = errHandler
+	m.oauthState = oauthState
 }
 
 // Init implements the Module interface method
