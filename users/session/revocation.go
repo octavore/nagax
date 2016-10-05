@@ -1,14 +1,6 @@
-package users
+package session
 
 import "time"
-
-// RevocationStore is the interface for a store which
-// keeps track of revoked sessions. By default it uses
-// an in-memory store
-type RevocationStore interface {
-	Revoke(id string, trackFor time.Duration)
-	IsRevoked(id string) bool
-}
 
 // InMemoryRevocationStore keeps track of revoked tokens
 // in memory and periodically flushes old tokens
@@ -16,6 +8,15 @@ type InMemoryRevocationStore struct {
 	revoked       map[string]time.Time
 	flushInterval time.Duration
 	ticker        *time.Ticker
+}
+
+// NewInMemoryRevocationStore returns a new in memory revocation store
+// which checks for expired tokens every flushInterval
+func NewInMemoryRevocationStore(flushInterval time.Duration) *InMemoryRevocationStore {
+	return &InMemoryRevocationStore{
+		revoked:       map[string]time.Time{},
+		flushInterval: flushInterval,
+	}
 }
 
 // Start the collection job

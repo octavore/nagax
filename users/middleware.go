@@ -2,33 +2,51 @@ package users
 
 import (
 	"context"
+	"errors"
 	"net/http"
 )
 
 type UserTokenKey struct{}
 
-func (m *Module) authenticatedFunc(next, unauthenticatedNext http.HandlerFunc) http.HandlerFunc {
+func (m *Module) WithAuth(next http.HandlerFunc) http.HandlerFunc {
+	return m.WithAuthList(m.Authenticators, next)
+}
+
+func (m *Module) MustWithAuth(next http.HandlerFunc) http.HandlerFunc {
+	return m.MustWithAuthList(m.Authenticators, next)
+}
+
+func (m *Module) WithAuthList(authenticators []Authenticator, next http.HandlerFunc) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		userToken, err := m.Authenticate(req)
+		_, userToken, err := m.authenticate(authenticators, rw, req)
 		if err != nil {
-			unauthenticatedNext(rw, req)
-		} else {
-			ctx := context.WithValue(req.Context(), UserTokenKey{}, userToken)
-			next(rw, req.WithContext(ctx))
+			m.ErrorHandler(rw, req, err)
+			return
 		}
+		if userToken != nil {
+			ctx := context.WithValue(req.Context(), UserTokenKey{}, userToken)
+			req = req.WithContext(ctx)
+		}
+		next(rw, req)
 	}
 }
 
-func (m *Module) AuthenticatedFunc(next http.HandlerFunc) http.HandlerFunc {
-	return m.authenticatedFunc(next, next)
-}
+var ErrNotAuthorized = errors.New("not authorized")
 
-func (m *Module) MustAuthenticateFunc(next http.HandlerFunc) http.HandlerFunc {
-	return m.authenticatedFunc(next, func(rw http.ResponseWriter, req *http.Request) {
-		http.Redirect(rw, req, "/", http.StatusForbidden)
-	})
-}
+func (m *Module) MustWithAuthList(authenticators []Authenticator, next http.HandlerFunc) http.HandlerFunc {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		handled, userToken, err := m.authenticate(authenticators, rw, req)
+		if err != nil {
+			m.ErrorHandler(rw, req, err)
+			return
+		}
 
-func (m *Module) MustAuthenticateHandler(next http.Handler) http.HandlerFunc {
-	return m.MustAuthenticateFunc(next.ServeHTTP)
+		if !handled || userToken == nil {
+			m.ErrorHandler(rw, req, ErrNotAuthorized)
+			return
+		}
+
+		ctx := context.WithValue(req.Context(), UserTokenKey{}, userToken)
+		next(rw, req.WithContext(ctx))
+	}
 }

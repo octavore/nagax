@@ -1,18 +1,21 @@
-package users
+package session
 
 import (
 	"net/http"
 	"time"
 )
 
-// HandleLogout handles a logout request and attempts to erase the session cookie
-func (m *Module) HandleLogout(rw http.ResponseWriter, req *http.Request) {
+// DestroySession handles a logout request and attempts to erase the session cookie.
+func (m *Module) DestroySession(rw http.ResponseWriter, req *http.Request) {
 	session, err := m.getSessionFromRequest(req)
-	if session == nil || err != nil {
+	if session == nil {
+		return
+	} else if err != nil {
 		// TODO: log error
 		return
 	}
-	m.RevocationStore.Revoke(session.SessionID, m.revocationTrackDuration)
+
+	m.RevocationStore.Revoke(session.SessionID, revocationTrackDuration)
 	http.SetCookie(rw, &http.Cookie{
 		Name:     CookieName,
 		MaxAge:   -1,
