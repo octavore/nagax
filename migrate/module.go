@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/octavore/naga/service"
@@ -17,30 +18,37 @@ func init() {
 	migrate.SetTable("schema_migrations")
 }
 
+// Module migrate provides support for migrating postgres databases
+// using rubenv/sql-migrate
 type Module struct {
 	Config *config.Module
 	DB     *sql.DB
 
-	config Config
+	config          Config
+	migrationSource migrate.MigrationSource
+
+	suffixForTest string
 }
 
+// Config for migrate module
 type Config struct {
 	Datasources   map[string]Datasource `json:"datasources"`
 	MigrationsDir string                `json:"migrations"`
 }
 
+// Datasource is parsed from the config
 type Datasource struct {
 	Driver string `json:"driver"`
 	DSN    string `json:"dsn"`
 }
 
-func (m *Module) PrintHelp(ctx *service.CommandContext) {
+func (m *Module) printHelp(ctx *service.CommandContext) {
 	if len(ctx.Args) != 1 {
 		fmt.Println("Please specify a db:")
 		if len(m.config.Datasources) == 0 {
 			fmt.Println("  no databases found!")
 		} else {
-			for ds, _ := range m.config.Datasources {
+			for ds := range m.config.Datasources {
 				fmt.Println("  " + ds)
 			}
 		}
@@ -54,7 +62,7 @@ func (m *Module) Init(c *service.Config) {
 		ShortUsage: "run db migrations",
 		Run: func(ctx *service.CommandContext) {
 			if len(ctx.Args) != 1 {
-				m.PrintHelp(ctx)
+				m.printHelp(ctx)
 			}
 			err := m.Migrate(ctx.Args[0])
 			if err != nil {
@@ -68,7 +76,7 @@ func (m *Module) Init(c *service.Config) {
 		ShortUsage: "reset database",
 		Run: func(ctx *service.CommandContext) {
 			if len(ctx.Args) != 1 {
-				m.PrintHelp(ctx)
+				m.printHelp(ctx)
 			}
 			dbname := ctx.Args[0]
 			err := m.Reset(dbname)
@@ -96,9 +104,24 @@ func (m *Module) getConfig(dbname string) (*Datasource, error) {
 	if !ok {
 		return nil, fmt.Errorf("migrate: %q not configured", dbname)
 	}
+
+	// special case for parallelizing tests: add a suffix to the dbname
+	if dbname == "test" {
+		u, err := url.Parse(ds.DSN)
+		if err != nil {
+			return nil, err
+		}
+		database := strings.Trim(u.Path, "/")
+		if m.suffixForTest == "" {
+			m.suffixForTest = new64()
+		}
+		u.Path = database + "_" + m.suffixForTest
+		ds.DSN = u.String()
+	}
 	return &ds, nil
 }
 
+// Connect to the given DB
 func (m *Module) Connect(dbname string) (*sql.DB, error) {
 	ds, err := m.getConfig(dbname)
 	if err != nil {
@@ -107,15 +130,35 @@ func (m *Module) Connect(dbname string) (*sql.DB, error) {
 	return sql.Open(ds.Driver, ds.DSN)
 }
 
-func (m *Module) Reset(dbname string) error {
+func (m *Module) AddMigrations(migrationsDir string) {
+	panic("todo")
+}
+
+type (
+	assetFunc    func(path string) ([]byte, error)
+	assetDirFunc func(path string) ([]string, error)
+)
+
+// SetMigrationSource sets the migration source, for compatibility with
+// embedded file assets.
+func (m *Module) SetMigrationSource(asset assetFunc, assetDir assetDirFunc, dir string) {
+	m.migrationSource = &migrate.AssetMigrationSource{
+		Asset:    asset,
+		AssetDir: assetDir,
+		Dir:      dir,
+	}
+}
+
+// safeConnect connects to template1 so we can create/drop the desired database.
+func (m *Module) safeConnect(dbname string) (string, *sql.DB, error) {
 	ds, err := m.getConfig(dbname)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
 	u, err := url.Parse(ds.DSN)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
 	database := strings.Trim(u.Path, "/")
@@ -124,18 +167,59 @@ func (m *Module) Reset(dbname string) error {
 
 	db, err := sql.Open(ds.Driver, u.String())
 	if err != nil {
-		return err
+		return "", nil, err
 	}
-	defer db.Close()
-	_, err = db.Exec(`DROP DATABASE IF EXISTS ` + database)
+	return database, db, nil
+}
+
+// Reset drops and recreates the database
+func (m *Module) Reset(dbname string) error {
+	err := m.Drop(dbname)
 	if err != nil {
 		return err
 	}
 
-	_, err = db.Exec(`CREATE DATABASE ` + database)
+	databaseName, db, err := m.safeConnect(dbname)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// using template0 in order to support test parallelism
+	// cf http://stackoverflow.com/questions/4977171/pgerror-error-source-database-template1-is-being-accessed-by-other-users
+	// you may be able to hack around by creating some kind of global lock to protect
+	// connections to the template1 database?
+	// or maybe drop the connection as soon as possible?
+	_, err = db.Exec(`CREATE DATABASE ` + databaseName + ` TEMPLATE template0`)
 	return err
 }
 
+// Drop the database `dbname`
+func (m *Module) Drop(dbname string) error {
+	databaseName, db, err := m.safeConnect(dbname)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	_, err = db.Exec(`DROP DATABASE IF EXISTS ` + databaseName)
+	return err
+}
+
+// getMigrationSource returns the m.migrationSource if set, otherwise
+// it defaults by reading from the MigrationsDir specified in
+func (m *Module) getMigrationSource() (migrate.MigrationSource, error) {
+	if m.migrationSource != nil {
+		return m.migrationSource, nil
+	}
+	configPath, err := filepath.Abs(m.Config.ConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	migrationPath := filepath.Join(filepath.Dir(configPath), m.config.MigrationsDir)
+	return migrate.FileMigrationSource{Dir: migrationPath}, nil
+}
+
+// Migrate the given db
 func (m *Module) Migrate(dbname string) error {
 	ds, err := m.getConfig(dbname)
 	if err != nil {
@@ -146,9 +230,10 @@ func (m *Module) Migrate(dbname string) error {
 	if err != nil {
 		return err
 	}
-
-	migrations := migrate.FileMigrationSource{
-		Dir: m.config.MigrationsDir,
+	defer db.Close()
+	migrations, err := m.getMigrationSource()
+	if err != nil {
+		return err
 	}
 
 	_, err = migrate.Exec(db, ds.Driver, migrations, migrate.Up)
