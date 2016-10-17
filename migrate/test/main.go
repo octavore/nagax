@@ -3,8 +3,9 @@ package main
 import (
 	_ "github.com/lib/pq"
 
-	"github.com/octavore/nagax/migrate"
 	"github.com/octavore/naga/service"
+
+	"github.com/octavore/nagax/migrate"
 )
 
 type TestApp struct {

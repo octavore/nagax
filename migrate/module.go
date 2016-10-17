@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/octavore/naga/service"
-	"github.com/octavore/nagax/config"
 	"github.com/rubenv/sql-migrate"
+
+	"github.com/octavore/nagax/config"
 )
 
 func init() {

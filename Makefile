@@ -4,3 +4,6 @@ all:
 		protoc $$PROTO_DIR $$PROTO_FILES \
 		--go_out=import_prefix_proto=github.com/octavore/nagax/proto/,plugins=setter+grpc:./proto
 
+goimports:
+	GO_DIRS=$$(find . -name "*.go" -exec dirname {} \; | sort -u); \
+		$$GOPATH/bin/goimports -w -local github.com/octavore/nagax $$GO_DIRS
