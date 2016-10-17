@@ -2,15 +2,15 @@ package migrate
 
 import (
 	"crypto/rand"
-
-	"encoding/base64"
+	"encoding/base32"
+	"strings"
 )
 
-func new64() string {
-	b := make([]byte, 8)
+func randomToken() string {
+	b := make([]byte, 5)
 	_, err := rand.Read(b)
 	if err != nil {
 		panic(err)
 	}
-	return base64.StdEncoding.EncodeToString(b)
+	return strings.ToLower(base32.StdEncoding.EncodeToString(b))
 }

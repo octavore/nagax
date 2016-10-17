@@ -113,7 +113,7 @@ func (m *Module) getConfig(dbname string) (*Datasource, error) {
 		}
 		database := strings.Trim(u.Path, "/")
 		if m.suffixForTest == "" {
-			m.suffixForTest = new64()
+			m.suffixForTest = randomToken()
 		}
 		u.Path = database + "_" + m.suffixForTest
 		ds.DSN = u.String()
