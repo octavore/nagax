@@ -24,7 +24,7 @@ func (m *Module) WithAuthList(authenticators []Authenticator, next http.HandlerF
 			return
 		}
 		if userToken != nil {
-			ctx := context.WithValue(req.Context(), UserTokenKey{}, userToken)
+			ctx := context.WithValue(req.Context(), UserTokenKey{}, *userToken)
 			req = req.WithContext(ctx)
 		}
 		next(rw, req)
@@ -46,7 +46,7 @@ func (m *Module) MustWithAuthList(authenticators []Authenticator, next http.Hand
 			return
 		}
 
-		ctx := context.WithValue(req.Context(), UserTokenKey{}, userToken)
+		ctx := context.WithValue(req.Context(), UserTokenKey{}, *userToken)
 		next(rw, req.WithContext(ctx))
 	}
 }
