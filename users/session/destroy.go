@@ -27,3 +27,9 @@ func (m *Module) DestroySession(rw http.ResponseWriter, req *http.Request) {
 		Secure:   m.SecureCookie,
 	})
 }
+
+// Logout implements github.com/octavore/nagax/users.Logout
+// note that there is no redirect
+func (m *Module) Logout(rw http.ResponseWriter, req *http.Request) {
+	m.DestroySession(rw, req)
+}
