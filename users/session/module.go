@@ -5,6 +5,8 @@ import (
 
 	"github.com/octavore/naga/service"
 	"github.com/square/go-jose"
+
+	"github.com/octavore/nagax/users/session/keystore"
 )
 
 // todo: make these configurable
@@ -60,7 +62,7 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Start = func() {
 		if m.KeyStore == nil {
-			panic("session.KeyStore is required")
+			m.KeyStore = &keystore.KeyStore{}
 		}
 		if m.CookieDomain == "" {
 			panic("session.CookieDomain is required")
