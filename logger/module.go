@@ -21,7 +21,7 @@ type Logger interface {
 type DefaultLogger struct{}
 
 func (d *DefaultLogger) Info(args ...interface{}) {
-	log.Println("[INFO] %s", fmt.Sprint(args...))
+	log.Println("[INFO]", fmt.Sprint(args...))
 }
 
 func (d *DefaultLogger) Infof(format string, args ...interface{}) {
@@ -29,7 +29,7 @@ func (d *DefaultLogger) Infof(format string, args ...interface{}) {
 }
 
 func (d *DefaultLogger) Warning(args ...interface{}) {
-	log.Println("[WARN] %s", fmt.Sprint(args...))
+	log.Println("[WARN]", fmt.Sprint(args...))
 }
 
 func (d *DefaultLogger) Warningf(format string, args ...interface{}) {
@@ -37,7 +37,7 @@ func (d *DefaultLogger) Warningf(format string, args ...interface{}) {
 }
 
 func (d *DefaultLogger) Error(args ...interface{}) {
-	log.Println("[ERROR] %s", fmt.Sprint(args...))
+	log.Println("[ERROR]", fmt.Sprint(args...))
 }
 
 func (d *DefaultLogger) Errorf(format string, args ...interface{}) {
