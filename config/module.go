@@ -33,7 +33,7 @@ func (m *Module) Init(c *service.Config) {
 		case os.Getenv(ConfigEnv) != "":
 			m.ConfigPath = os.Getenv(ConfigEnv)
 		default:
-			m.ConfigPath = ""
+			m.ConfigPath = "config.json"
 		}
 
 		err := m.LoadConfig(m.ConfigPath)
