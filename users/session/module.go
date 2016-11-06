@@ -64,10 +64,6 @@ func (m *Module) Init(c *service.Config) {
 		if m.KeyStore == nil {
 			m.KeyStore = &keystore.KeyStore{}
 		}
-		if m.CookieDomain == "" {
-			panic("session.CookieDomain is required")
-		}
-
 		var err error
 		m.encrypter, m.decryptionKey, err = loadKeys(m.KeyStore)
 		if err != nil {
