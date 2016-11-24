@@ -15,8 +15,8 @@ func HashPassword(password, salt string) string {
 	return fmt.Sprintf("%s#%s", salt, base64.StdEncoding.EncodeToString(h))
 }
 
-func AuthenticatePassword(given, actual string) bool {
-	salt := strings.SplitN(given, "#", 2)[0]
-	hash2 := []byte(HashPassword(actual, salt))
-	return subtle.ConstantTimeCompare([]byte(given), hash2) == 1
+func AuthenticatePassword(given, hashedActual string) bool {
+	salt := strings.SplitN(hashedActual, "#", 2)[0]
+	hash2 := []byte(HashPassword(given, salt))
+	return subtle.ConstantTimeCompare([]byte(hashedActual), hash2) == 1
 }
