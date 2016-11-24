@@ -9,6 +9,7 @@ import (
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/router"
 	"github.com/octavore/nagax/users/session"
+	"github.com/octavore/nagax/util/token"
 )
 
 const (
@@ -50,6 +51,11 @@ func (m *Module) Init(c *service.Config) {
 
 		m.Router.HandleFunc(loginPath, m.handleLogin)
 	}
+}
+
+// Create a new user
+func (m *Module) Create(email, password string) (string, error) {
+	return m.UserStore.Create(email, HashPassword(password, token.New32()))
 }
 
 // Login with email and password, returns user id if valid
