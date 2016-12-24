@@ -11,16 +11,16 @@ import (
 func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) {
 	// oauth handshake
 	code := req.FormValue("code")
-	accessToken, err := m.OAuthConfig.Exchange(oauth2.NoContext, code)
+	accessToken, err := m.oauthConfig.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		m.ErrorHandler(rw, req, err)
+		m.errorHandler(rw, req, err)
 		return
 	}
 
 	// convert access token to user
-	userToken, err := getOrCreateUser(m.UserStore, accessToken)
+	userToken, err := getOrCreateUser(m.userStore, accessToken)
 	if err != nil {
-		m.ErrorHandler(rw, req, err)
+		m.errorHandler(rw, req, err)
 		return
 	}
 
@@ -28,7 +28,7 @@ func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) 
 	redirectURL := &url.URL{
 		Scheme: req.URL.Scheme,
 		Host:   req.URL.Host,
-		Path:   m.PostOAuthRedirectPath,
+		Path:   m.postOAuthRedirectPath,
 	}
 
 	// try to read the state from the query parameters
@@ -48,7 +48,7 @@ func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) 
 
 	err = m.Sessions.CreateSession(userToken, rw)
 	if err != nil {
-		m.ErrorHandler(rw, req, err)
+		m.errorHandler(rw, req, err)
 		return
 	}
 	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)

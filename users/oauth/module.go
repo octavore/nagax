@@ -13,10 +13,12 @@ import (
 )
 
 const (
-	LoginURL                     = "/login" // make this configurable
-	OAuthCallbackPath            = "/oauth/callback"
+	defaultLoginURL              = "/login"
+	defaultOAuthCallbackPath     = "/oauth/callback"
 	defaultPostOAuthRedirectPath = "/"
 )
+
+type errorHandler func(http.ResponseWriter, *http.Request, error)
 
 // UserStore is an interface for managing users by oauth id
 type UserStore interface {
@@ -30,32 +32,40 @@ var _ users.Authenticator = &Module{}
 
 // Module oauth implements oauth start and callback
 type Module struct {
-	Router    *router.Module
-	Sessions  *session.Module // todo: make this an interface
-	Logger    *logger.Module
-	UserStore UserStore
+	Router   *router.Module
+	Sessions *session.Module // todo: make this an interface
+	Logger   *logger.Module
 
-	ErrorHandler  func(http.ResponseWriter, *http.Request, error)
-	SetOAuthState func(req *http.Request) string
-
-	PostOAuthRedirectPath string
-	OAuthConfig           *oauth2.Config
-	OAuthOptions          []oauth2.AuthCodeOption
+	postOAuthRedirectPath string
+	oauthCallbackPath     string
+	loginURL              string
+	userStore             UserStore
+	errorHandler          errorHandler
+	setOAuthState         func(req *http.Request) string
+	oauthConfig           *oauth2.Config
+	oauthOptions          []oauth2.AuthCodeOption
 }
 
 func (m *Module) Init(c *service.Config) {
-	m.PostOAuthRedirectPath = defaultPostOAuthRedirectPath
-
 	c.Setup = func() error {
-		m.Router.HandleFunc(LoginURL, m.handleOAuthStart)
-		m.Router.HandleFunc(OAuthCallbackPath, m.handleOAuthCallback)
+		m.postOAuthRedirectPath = defaultPostOAuthRedirectPath
+		m.oauthCallbackPath = defaultOAuthCallbackPath
+		m.loginURL = defaultLoginURL
 		return nil
 	}
 
 	c.Start = func() {
-		if m.UserStore == nil {
+		m.Router.HandleFunc(m.loginURL, m.handleOAuthStart)
+		m.Router.HandleFunc(m.oauthCallbackPath, m.handleOAuthCallback)
+		if m.userStore == nil {
 			panic("oauth.UserStore is required")
 		}
+	}
+}
+
+func (m *Module) Configure(opts ...option) {
+	for _, opt := range opts {
+		opt(m)
 	}
 }
 

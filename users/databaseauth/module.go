@@ -17,50 +17,54 @@ const (
 	defaultPostAuthRedirectPath = "/"
 )
 
+type errorHandler func(http.ResponseWriter, *http.Request, error)
+
 // Module databaseauth provides login via a database
 // or database-like backend
 type Module struct {
-	Router    *router.Module
-	Sessions  *session.Module
-	Logger    *logger.Module
-	UserStore UserStore
+	Router   *router.Module
+	Sessions *session.Module
+	Logger   *logger.Module
 
-	LoginPath            string
-	PostAuthRedirectPath string // defaults to "/"
-	ErrorHandler         func(http.ResponseWriter, *http.Request, error)
+	userStore            UserStore
+	loginPath            string
+	postAuthRedirectPath string // defaults to "/"
+	errorHandler         errorHandler
 }
 
 var _ service.Module = &Module{}
 
 func (m *Module) Init(c *service.Config) {
+	c.Setup = func() error {
+		m.postAuthRedirectPath = defaultPostAuthRedirectPath
+		m.loginPath = defaultLoginPath
+		return nil
+	}
 	c.Start = func() {
-		if m.UserStore == nil {
+		if m.userStore == nil {
 			panic("databaseauth: UserStore not configured")
 		}
-		if m.ErrorHandler == nil {
+		if m.errorHandler == nil {
 			panic("databaseauth: ErrorHandler not configured")
 		}
-		if m.PostAuthRedirectPath == "" {
-			m.PostAuthRedirectPath = defaultPostAuthRedirectPath
-		}
+		m.Router.HandleFunc(m.loginPath, m.handleLogin)
+	}
+}
 
-		loginPath := defaultLoginPath
-		if m.LoginPath != "" {
-			loginPath = m.LoginPath
-		}
-
-		m.Router.HandleFunc(loginPath, m.handleLogin)
+func (m *Module) Configure(opts ...option) {
+	for _, opt := range opts {
+		opt(m)
 	}
 }
 
 // Create a new user
 func (m *Module) Create(email, password string) (string, error) {
-	return m.UserStore.Create(email, HashPassword(password, token.New32()))
+	return m.userStore.Create(email, HashPassword(password, token.New32()))
 }
 
 // Login with email and password, returns user id if valid
 func (m *Module) Login(email, password string) (string, bool, error) {
-	userID, hashedPassword, err := m.UserStore.Get(email)
+	userID, hashedPassword, err := m.userStore.Get(email)
 	if err != nil {
 		return "", false, err
 	}
@@ -72,18 +76,19 @@ func (m *Module) handleLogin(rw http.ResponseWriter, req *http.Request) {
 	password := req.PostFormValue("password")
 	userID, valid, err := m.Login(email, password)
 	if err != nil {
-		m.ErrorHandler(rw, req, err)
+		m.errorHandler(rw, req, err)
 		return
 	}
 	if !valid {
-		m.ErrorHandler(rw, req, errors.New("invalid user"))
+		m.errorHandler(rw, req, errors.New("invalid user"))
 		return
 	}
 	err = m.Sessions.CreateSession(userID, rw)
 	if err != nil {
-		m.ErrorHandler(rw, req, err)
+		m.errorHandler(rw, req, err)
 		return
 	}
 	// todo: allow whitelist of parameters to pass through to redirect
-	http.Redirect(rw, req, m.PostAuthRedirectPath, http.StatusFound)
+	// todo: make redirect optional
+	http.Redirect(rw, req, m.postAuthRedirectPath, http.StatusFound)
 }
