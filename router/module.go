@@ -36,11 +36,16 @@ func (m *Module) Init(c *service.Config) {
 		return nil
 	}
 	c.Start = func() {
+		iface := "127.0.0.1"
 		port := 8000
 		if m.config.Port != 0 {
 			port = m.config.Port
+			if port == 80 || port == 443 {
+				iface = "0.0.0.0"
+			}
 		}
-		laddr := fmt.Sprintf("127.0.0.1:%d", port)
+		laddr := fmt.Sprintf("%s:%d", iface, port)
+
 		log.Println("listening on", laddr)
 		go http.ListenAndServe(laddr, m)
 	}
