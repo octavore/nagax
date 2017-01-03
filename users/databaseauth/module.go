@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultLoginPath            = "/login"
-	defaultPostAuthRedirectPath = "/"
+	defaultPostAuthRedirectPath = ""
 )
 
 type errorHandler func(http.ResponseWriter, *http.Request, error)
@@ -89,6 +89,7 @@ func (m *Module) handleLogin(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// todo: allow whitelist of parameters to pass through to redirect
-	// todo: make redirect optional
-	http.Redirect(rw, req, m.postAuthRedirectPath, http.StatusFound)
+	if m.postAuthRedirectPath != "" {
+		http.Redirect(rw, req, m.postAuthRedirectPath, http.StatusFound)
+	}
 }
