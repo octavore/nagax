@@ -64,6 +64,10 @@ func (m *Module) Init(c *service.Config) {
 func (m *Module) LoadConfig(path string) error {
 	_, err := os.Stat(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			m.Byte = []byte(`{}`)
+			return nil
+		}
 		return err
 	}
 	m.Byte, err = ioutil.ReadFile(path)
