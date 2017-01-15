@@ -1,17 +1,19 @@
 package session
 
 import (
+	"crypto/rsa"
 	"time"
 
 	"github.com/octavore/naga/service"
 	"github.com/square/go-jose"
 
-	"github.com/octavore/nagax/users/session/keystore"
+	"github.com/octavore/nagax/keystore"
 )
 
 // todo: make these configurable
 const (
 	CookieName        = "session"
+	defaultKeyFile    = "session.key"
 	keyAlgorithm      = jose.RSA_OAEP
 	contentEncryption = jose.A128GCM
 
@@ -29,8 +31,8 @@ type RevocationStore interface {
 
 // KeyStore interface for retrieving keys (used for encrypting session cookie)
 type KeyStore interface {
-	LoadPrivateKey() ([]byte, error)
-	LoadPublicKey() ([]byte, error)
+	LoadPrivateKey(string) ([]byte, *rsa.PrivateKey, error)
+	LoadPublicKey(string) ([]byte, error)
 }
 
 var _ service.Module = &Module{}
@@ -47,6 +49,7 @@ type Module struct {
 
 	SecureCookie bool
 	CookieDomain string
+	KeyFile      string
 
 	decryptionKey           interface{}
 	encrypter               jose.Encrypter
@@ -64,8 +67,11 @@ func (m *Module) Init(c *service.Config) {
 		if m.KeyStore == nil {
 			m.KeyStore = &keystore.KeyStore{}
 		}
+		if m.KeyFile == "" {
+			m.KeyFile = defaultKeyFile
+		}
 		var err error
-		m.encrypter, m.decryptionKey, err = loadKeys(m.KeyStore)
+		m.encrypter, m.decryptionKey, err = loadKeys(m.KeyFile, m.KeyStore)
 		if err != nil {
 			panic(err)
 		}
@@ -77,8 +83,8 @@ func (m *Module) Init(c *service.Config) {
 }
 
 // load keys from the keystore
-func loadKeys(keyStore KeyStore) (jose.Encrypter, interface{}, error) {
-	privateKey, err := keyStore.LoadPrivateKey()
+func loadKeys(keyFile string, keyStore KeyStore) (jose.Encrypter, interface{}, error) {
+	privateKey, _, err := keyStore.LoadPrivateKey(keyFile)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -87,7 +93,7 @@ func loadKeys(keyStore KeyStore) (jose.Encrypter, interface{}, error) {
 		return nil, nil, err
 	}
 
-	pub, err := keyStore.LoadPublicKey()
+	pub, err := keyStore.LoadPublicKey(keyFile)
 	if err != nil {
 		return nil, nil, err
 	}
