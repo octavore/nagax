@@ -13,6 +13,7 @@ import (
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/proto/nagax/router/api"
+	"github.com/octavore/nagax/router/middleware"
 )
 
 // Config for the router module
@@ -26,12 +27,15 @@ type Module struct {
 	Logger *logger.Module
 	Config *config.Module
 	config Config
+
+	Middleware *middleware.MiddlewareServer
 }
 
 // Init implements service.Init
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.ServeMux = http.NewServeMux()
+		m.Middleware = middleware.NewServer(m.ServeMux.ServeHTTP)
 		m.Config.ReadConfig(&m.config)
 		return nil
 	}
@@ -47,7 +51,7 @@ func (m *Module) Init(c *service.Config) {
 		laddr := fmt.Sprintf("%s:%d", iface, port)
 
 		log.Println("listening on", laddr)
-		go http.ListenAndServe(laddr, m)
+		go http.ListenAndServe(laddr, m.Middleware)
 	}
 }
 
