@@ -20,7 +20,10 @@ const (
 type errorHandler func(http.ResponseWriter, *http.Request, error)
 
 // Module databaseauth provides login via a database
-// or database-like backend
+// or database-like backend. It uses the session module.
+// user authenticates via this module, then is a given a cookie
+// which authenticates future requests. It registers m.loginPath for
+// handling the login POST request.
 type Module struct {
 	Router   *router.Module
 	Sessions *session.Module
@@ -48,12 +51,6 @@ func (m *Module) Init(c *service.Config) {
 			panic("databaseauth: ErrorHandler not configured")
 		}
 		m.Router.HandleFunc(m.loginPath, m.handleLogin)
-	}
-}
-
-func (m *Module) Configure(opts ...option) {
-	for _, opt := range opts {
-		opt(m)
 	}
 }
 
