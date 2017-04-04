@@ -73,6 +73,10 @@ func (m *Module) Proto(rw http.ResponseWriter, status int, pb proto.Message) err
 
 // JSON renders a response with given status and JSON serialized data
 func (m *Module) JSON(rw http.ResponseWriter, status int, v interface{}) error {
+	if pb, ok := v.(proto.Message); ok {
+		return m.Proto(rw, status, pb)
+	}
+
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
