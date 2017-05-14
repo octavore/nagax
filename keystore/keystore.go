@@ -26,6 +26,15 @@ func getPrivateKey(fileName string) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
+	keyfileDir := path.Dir(fileName)
+	_, err = os.Stat(keyfileDir)
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(keyfileDir, 0700)
+	}
+	if err != nil {
+		return nil, err
+	}
+
 	b = x509.MarshalPKCS1PrivateKey(privateKey)
 	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0600)
 	if err != nil {
