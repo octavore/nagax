@@ -29,3 +29,9 @@ func WithOAuthConfig(config *oauth2.Config) option {
 		m.oauthConfig = config
 	}
 }
+
+func WithAuthCodeOptions(authCodeOptions ...oauth2.AuthCodeOption) option {
+	return func(m *Module) {
+		m.oauthOptions = authCodeOptions
+	}
+}
