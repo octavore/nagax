@@ -16,7 +16,11 @@ type MiddlewareServer struct {
 }
 
 func NewServer(base http.HandlerFunc) *MiddlewareServer {
-	return &MiddlewareServer{base: base, middlewareList: []Middleware{}}
+	return &MiddlewareServer{
+		serve:          base,
+		base:           base,
+		middlewareList: []Middleware{},
+	}
 }
 
 func (m *MiddlewareServer) Prepend(middleware Middleware) {
