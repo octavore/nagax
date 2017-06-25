@@ -36,7 +36,7 @@ func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
 		Value:    msg,
 		HttpOnly: true,
 		Path:     "/",
-		MaxAge:   int(m.sessionValidityDuration.Seconds()),
+		MaxAge:   int(m.SessionValidityDuration.Seconds()),
 		Domain:   m.CookieDomain,
 		Secure:   m.SecureCookie,
 	}, nil

@@ -17,8 +17,7 @@ const (
 	keyAlgorithm      = jose.RSA_OAEP
 	contentEncryption = jose.A128GCM
 
-	defaultRevocationFlush  time.Duration = 15 * time.Minute
-	revocationTrackDuration time.Duration = 24 * time.Hour
+	defaultRevocationFlush time.Duration = 15 * time.Minute
 )
 
 // RevocationStore is the interface for a store which
@@ -50,10 +49,11 @@ type Module struct {
 	SecureCookie bool
 	CookieDomain string
 	KeyFile      string
+	SessionValidityDuration time.Duration
 
 	decryptionKey           interface{}
 	encrypter               jose.Encrypter
-	sessionValidityDuration time.Duration
+	revocationTrackDuration time.Duration
 }
 
 // Init implements module.Init
@@ -75,6 +75,7 @@ func (m *Module) Init(c *service.Config) {
 		if err != nil {
 			panic(err)
 		}
+		m.revocationTrackDuration = m.SessionValidityDuration
 		s, ok := m.RevocationStore.(*InMemoryRevocationStore)
 		if ok {
 			go s.Start()
