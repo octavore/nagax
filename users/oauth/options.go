@@ -1,6 +1,8 @@
 package oauth
 
 import (
+	"net/http"
+
 	"golang.org/x/oauth2"
 )
 
@@ -33,5 +35,11 @@ func WithOAuthConfig(config *oauth2.Config) option {
 func WithAuthCodeOptions(authCodeOptions ...oauth2.AuthCodeOption) option {
 	return func(m *Module) {
 		m.oauthOptions = authCodeOptions
+	}
+}
+
+func WithSetState(setOAuthState func(req *http.Request) string) option {
+	return func(m *Module) {
+		m.setOAuthState = setOAuthState
 	}
 }
