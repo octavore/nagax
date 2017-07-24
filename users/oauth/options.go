@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"net/http"
+	"net/url"
 
 	"golang.org/x/oauth2"
 )
@@ -41,5 +42,11 @@ func WithAuthCodeOptions(authCodeOptions ...oauth2.AuthCodeOption) option {
 func WithSetState(setOAuthState func(req *http.Request) string) option {
 	return func(m *Module) {
 		m.setOAuthState = setOAuthState
+	}
+}
+
+func WithGetCallbackRedirectPath(getCallbackRedirectPath func(userToken, state string) *url.URL) option {
+	return func(m *Module) {
+		m.getCallbackRedirectPath = getCallbackRedirectPath
 	}
 }

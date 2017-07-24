@@ -26,22 +26,34 @@ func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) 
 
 	// get the URL to redirect to
 	redirectURL := &url.URL{
-		Scheme: req.URL.Scheme,
-		Host:   req.URL.Host,
-		Path:   m.postOAuthRedirectPath,
+		Path: m.postOAuthRedirectPath,
 	}
 
 	// try to read the state from the query parameters
-	state := req.FormValue("state")
-	if state != "" {
-		stateByte, err := base64.StdEncoding.DecodeString(state)
+	state := ""
+	encState := req.FormValue("state")
+	if encState != "" {
+		stateByte, err := base64.StdEncoding.DecodeString(encState)
 		if err != nil {
 			m.Logger.Error("error decoding state: ", err)
 		} else {
 			query := redirectURL.Query()
-			query.Set("state", string(stateByte))
+			state = string(stateByte)
+			query.Set("state", state)
 			redirectURL.RawQuery = query.Encode()
 		}
+	}
+
+	if m.getCallbackRedirectPath != nil {
+		altRedirectURL := m.getCallbackRedirectPath(userToken, state)
+		if altRedirectURL != nil {
+			redirectURL = altRedirectURL
+		}
+	}
+
+	if redirectURL.Host == "" {
+		redirectURL.Scheme = req.URL.Scheme
+		redirectURL.Host = req.URL.Host
 	}
 
 	m.Logger.Infof("redirecting after oauth: %s", redirectURL.String())

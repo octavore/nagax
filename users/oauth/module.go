@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/octavore/naga/service"
 	"golang.org/x/oauth2"
@@ -44,6 +45,7 @@ type Module struct {
 	setOAuthState         func(req *http.Request) string
 	oauthConfig           *oauth2.Config
 	oauthOptions          []oauth2.AuthCodeOption
+	getCallbackRedirectPath func(userToken string, state string) *url.URL
 }
 
 func (m *Module) Init(c *service.Config) {
