@@ -8,6 +8,7 @@ import (
 	"github.com/square/go-jose"
 
 	"github.com/octavore/nagax/keystore"
+	"github.com/octavore/nagax/users"
 )
 
 // todo: make these configurable
@@ -34,7 +35,10 @@ type KeyStore interface {
 	LoadPublicKey(string) ([]byte, error)
 }
 
-var _ service.Module = &Module{}
+var (
+	_ service.Module      = &Module{}
+	_ users.Authenticator = &Module{} // this module is an authenticator
+)
 
 // Module session is for keeping track of sessions
 // See:
@@ -46,9 +50,9 @@ type Module struct {
 	KeyStore        KeyStore
 	RevocationStore RevocationStore
 
-	SecureCookie bool
-	CookieDomain string
-	KeyFile      string
+	SecureCookie            bool
+	CookieDomain            string
+	KeyFile                 string
 	SessionValidityDuration time.Duration
 
 	decryptionKey           interface{}

@@ -44,6 +44,8 @@ func (d *DefaultLogger) Errorf(format string, args ...interface{}) {
 	log.Printf("[ERROR] "+format, args...)
 }
 
+var _ service.Module = &Module{}
+
 type Module struct {
 	Logger
 }

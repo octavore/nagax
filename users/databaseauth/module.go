@@ -19,6 +19,10 @@ const (
 
 type errorHandler func(http.ResponseWriter, *http.Request, error)
 
+var (
+	_ service.Module = &Module{}
+)
+
 // Module databaseauth provides login via a database
 // or database-like backend. It uses the session module.
 // user authenticates via this module, then is a given a cookie
