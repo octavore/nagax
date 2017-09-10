@@ -2,12 +2,20 @@ syntax = "proto2";
 
 package nagax.router.api;
 
-message Error {
-  optional string code = 1;
-  optional string title = 2;
-  optional string detail = 3; // optional long message
-  optional string field = 4; // optionally indicate field with error
+enum ErrorCode {
+  internal_server_error = 500;
+  bad_request = 400;
+  forbidden = 403;
+  not_found = 404;
 }
+
+message Error {
+  optional int32 code = 1;
+  optional ErrorCode title = 2; // corresponds to code, e.g. not_found, internal_server_error
+  optional string detail = 3; // optional long message
+  // optional string field = 4; // optionally indicate field with error
+}
+
 message ErrorResponse {
   repeated Error errors = 1;
 }

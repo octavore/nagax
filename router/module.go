@@ -41,6 +41,7 @@ type Module struct {
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.HTTPRouter = httprouter.New()
+		m.ErrorHandler = m.HandleError
 
 		// root handler
 		m.Root = http.NewServeMux()
