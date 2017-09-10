@@ -15,14 +15,6 @@ func WithUserStore(u UserStore) option {
 	}
 }
 
-// WithErrorHandler configures the errorhandler for
-// handling errors. Required.
-func WithErrorHandler(e errorHandler) option {
-	return func(m *Module) {
-		m.errorHandler = e
-	}
-}
-
 // WithRedirectPath sets the path to redirect to after login.
 // If set to blank, successful logins will not result in a redirect.
 func WithRedirectPath(path string) option {
