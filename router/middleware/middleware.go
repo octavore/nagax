@@ -37,8 +37,6 @@ func (m *MiddlewareServer) Append(middleware Middleware) {
 	m.Rebuild()
 }
 
-// Remove middleware
-
 func (m *MiddlewareServer) Set(middlewares ...Middleware) {
 	m.mu.Lock()
 	m.middlewareList = middlewares

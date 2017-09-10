@@ -1,19 +1,22 @@
 package router
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"github.com/julienschmidt/httprouter"
 	"github.com/octavore/naga/service"
 
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
-	"github.com/octavore/nagax/proto/nagax/router/api"
 	"github.com/octavore/nagax/router/middleware"
+)
+
+type Params = httprouter.Params
+
+type (
+	Handle      func(rw http.ResponseWriter, req *http.Request, par httprouter.Params) error
+	HandleError func(rw http.ResponseWriter, req *http.Request, err error)
 )
 
 // Config for the router module
@@ -21,110 +24,96 @@ type Config struct {
 	Port int `json:"port"`
 }
 
-// Module router implements basic routing with helpers for protobuf-based responses.
+// Module router implements basic routing with helpers for protobuf-rootd responses.
 type Module struct {
-	*http.ServeMux
 	Logger *logger.Module
 	Config *config.Module
-	config Config
 
-	Middleware *middleware.MiddlewareServer
+	Root         *http.ServeMux
+	HTTPRouter   *httprouter.Router
+	ErrorHandler HandleError
+	Middleware   *middleware.MiddlewareServer
+
+	config Config
 }
 
 // Init implements service.Init
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
-		m.ServeMux = http.NewServeMux()
-		m.Middleware = middleware.NewServer(m.ServeMux.ServeHTTP)
+		m.HTTPRouter = httprouter.New()
+
+		// root handler
+		m.Root = http.NewServeMux()
+		m.Root.Handle("/", m.HTTPRouter)
+		m.Middleware = middleware.NewServer(m.Root.ServeHTTP)
 		m.Config.ReadConfig(&m.config)
 		return nil
 	}
-	c.Start = func() {
-		iface := "127.0.0.1"
-		port := 8000
-		if m.config.Port != 0 {
-			port = m.config.Port
-			if port == 80 || port == 443 {
-				iface = "0.0.0.0"
-			}
-		}
-		laddr := fmt.Sprintf("%s:%d", iface, port)
 
-		log.Println("listening on", laddr)
+	c.Start = func() {
+		laddr := m.laddr()
+		m.Logger.Infof("listening on %s", laddr)
 		go http.ListenAndServe(laddr, m.Middleware)
 	}
 }
 
-var jpb = &jsonpb.Marshaler{
-	EnumsAsInts: false,
-	Indent:      "  ",
-}
-
-// ProtoOK renders a 200 response with JSON-serialized proto
-func (m *Module) ProtoOK(rw http.ResponseWriter, pb proto.Message) error {
-	return m.Proto(rw, http.StatusOK, pb)
-}
-
-// Proto renders a response with given status code and JSON-serialized proto
-func (m *Module) Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
-	rw.WriteHeader(status)
-	return jpb.Marshal(rw, pb)
-}
-
-// JSON renders a response with given status and JSON serialized data
-func (m *Module) JSON(rw http.ResponseWriter, status int, v interface{}) error {
-	if pb, ok := v.(proto.Message); ok {
-		return m.Proto(rw, status, pb)
+func (m *Module) laddr() string {
+	iface := "127.0.0.1"
+	port := 8000
+	if m.config.Port != 0 {
+		port = m.config.Port
+		if port == 80 || port == 443 {
+			iface = "0.0.0.0"
+		}
 	}
-
-	b, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(status)
-	_, err = rw.Write(b)
-	return err
+	return fmt.Sprintf("%s:%d", iface, port)
 }
 
-// EmptyJSON renders a 200 response with JSON body `{}`
-func (m *Module) EmptyJSON(rw http.ResponseWriter, status int) error {
-	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(status)
-	_, err := rw.Write([]byte(`{}`))
-	return err
+// POST is a shortcut for m.HTTPRouter.POST
+func (m *Module) POST(path string, h Handle) {
+	m.HTTPRouter.POST(path, m.wrap(h))
 }
 
-// QuietError logs an error and returns the given status without a body
-func (m *Module) QuietError(rw http.ResponseWriter, status int, err error) {
-	m.Logger.Errorf("%d %s", status, err)
-	rw.WriteHeader(status)
+// GET is a shortcut for m.HTTPRouter.GET
+func (m *Module) GET(path string, h Handle) {
+	m.HTTPRouter.GET(path, m.wrap(h))
 }
 
-// SimpleError responds with err.Error() as the detail of a JSON error response.
-func (m *Module) SimpleError(rw http.ResponseWriter, status int, err error) error {
-	m.Logger.Errorf("%d %s", status, err)
-	return m.Error(rw, status, &api.Error{
-		Code:   proto.String("error"),
-		Title:  proto.String("error"),
-		Detail: proto.String(err.Error()),
+// PUT is a shortcut for m.HTTPRouter.PUT
+func (m *Module) PUT(path string, h Handle) {
+	m.HTTPRouter.PUT(path, m.wrap(h))
+}
+
+// PATCH is a shortcut for m.HTTPRouter.PATCH
+func (m *Module) PATCH(path string, h Handle) {
+	m.HTTPRouter.PATCH(path, m.wrap(h))
+}
+
+// Handle is a shortcut for m.HTTPRouter.Handle
+func (m *Module) Handle(method, path string, h http.HandlerFunc) {
+	m.HTTPRouter.Handle(method, path, func(rw http.ResponseWriter, req *http.Request, _ Params) {
+		h(rw, req)
 	})
 }
 
-func (m *Module) Error(rw http.ResponseWriter, status int, errors ...*api.Error) error {
-	for _, err := range errors {
-		m.Logger.Errorf("%d %s", status, err)
-	}
-	return m.Proto(rw, status, &api.ErrorResponse{
-		Errors: errors,
-	})
+// WrappedHandle is a shortcut for m.HTTPRouter.Handle
+func (m *Module) WrappedHandle(method, path string, h Handle) {
+	m.HTTPRouter.Handle(method, path, m.wrap(h))
 }
 
-// InternalError returns an internal server error
-func (m *Module) InternalError(rw http.ResponseWriter) error {
-	m.Logger.Error("500 internal server error")
-	return m.Proto(rw, http.StatusInternalServerError, &api.Error{
-		Code:  proto.String("internal_server_error"),
-		Title: proto.String("Internal server error"),
-	})
+// Subrouter creates a new router rooted at path
+func (m *Module) Subrouter(path string) *httprouter.Router {
+	r := httprouter.New()
+	m.Root.Handle(path, r)
+	return r
+}
+
+// wrap the given handler to handle errors
+func (m *Module) wrap(h Handle) httprouter.Handle {
+	return func(rw http.ResponseWriter, req *http.Request, par Params) {
+		err := h(rw, req, par)
+		if err != nil && m.ErrorHandler != nil {
+			m.ErrorHandler(rw, req, err)
+		}
+	}
 }
