@@ -1,11 +1,14 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/octavore/nagax/proto/nagax/router/api"
 )
+
+var ErrNotFound = fmt.Errorf("not found")
 
 // QuietError logs an error and returns the given status without a body
 func (m *Module) QuietError(rw http.ResponseWriter, status int, err error) {
@@ -27,7 +30,7 @@ func (m *Module) Error(rw http.ResponseWriter, status int, errors ...*api.Error)
 	for _, err := range errors {
 		m.Logger.Errorf("%d %s", status, err)
 	}
-	return m.Proto(rw, status, &api.ErrorResponse{
+	return Proto(rw, status, &api.ErrorResponse{
 		Errors: errors,
 	})
 }
@@ -35,7 +38,7 @@ func (m *Module) Error(rw http.ResponseWriter, status int, errors ...*api.Error)
 // InternalError returns an internal server error
 func (m *Module) InternalError(rw http.ResponseWriter) error {
 	m.Logger.Error("500 internal server error")
-	return m.Proto(rw, http.StatusInternalServerError, &api.Error{
+	return Proto(rw, http.StatusInternalServerError, &api.Error{
 		Code:  proto.String("internal_server_error"),
 		Title: proto.String("Internal server error"),
 	})

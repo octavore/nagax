@@ -14,20 +14,21 @@ var jpb = &jsonpb.Marshaler{
 }
 
 // ProtoOK renders a 200 response with JSON-serialized proto
-func (m *Module) ProtoOK(rw http.ResponseWriter, pb proto.Message) error {
-	return m.Proto(rw, http.StatusOK, pb)
+func ProtoOK(rw http.ResponseWriter, pb proto.Message) error {
+	return Proto(rw, http.StatusOK, pb)
 }
 
 // Proto renders a response with given status code and JSON-serialized proto
-func (m *Module) Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
+func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
+	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	return jpb.Marshal(rw, pb)
 }
 
 // JSON renders a response with given status and JSON serialized data
-func (m *Module) JSON(rw http.ResponseWriter, status int, v interface{}) error {
+func JSON(rw http.ResponseWriter, status int, v interface{}) error {
 	if pb, ok := v.(proto.Message); ok {
-		return m.Proto(rw, status, pb)
+		return Proto(rw, status, pb)
 	}
 
 	b, err := json.MarshalIndent(v, "", "  ")
