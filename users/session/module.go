@@ -4,6 +4,8 @@ import (
 	"crypto/rsa"
 	"time"
 
+	"github.com/octavore/nagax/logger"
+
 	"github.com/octavore/naga/service"
 	"github.com/square/go-jose"
 
@@ -47,6 +49,8 @@ var (
 // - VerifyAndExtend
 // - EndSession
 type Module struct {
+	Logger *logger.Module
+
 	KeyStore        KeyStore
 	RevocationStore RevocationStore
 

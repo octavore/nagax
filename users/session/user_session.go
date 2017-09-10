@@ -2,8 +2,9 @@ package session
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
+
+	"github.com/octavore/nagax/util/errors"
 
 	jose "github.com/square/go-jose"
 )
@@ -51,18 +52,21 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 	if err == http.ErrNoCookie {
 		return nil, nil
 	} else if err != nil {
-		return nil, err
+		m.Logger.Error(errors.Wrap(err))
+		return nil, nil
 	}
 
 	obj, err := jose.ParseEncrypted(cookie.Value)
 	if err != nil {
-		return nil, err
+		m.Logger.Error(errors.Wrap(err))
+		return nil, nil
 	}
 
 	b, err := obj.Decrypt(m.decryptionKey)
 	session := &UserSession{}
 	if err = json.Unmarshal(b, session); err != nil {
-		return nil, err
+		m.Logger.Error(errors.Wrap(err))
+		return nil, nil
 	}
 	if m.RevocationStore.IsRevoked(session.SessionID) {
 		return nil, errors.New("invalid session")
