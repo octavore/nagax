@@ -19,6 +19,7 @@ var (
 type Error struct {
 	err    api.Error
 	source string
+	silent bool
 }
 
 func (e *Error) Error() string {
@@ -40,6 +41,7 @@ func NewError(code int32, detail string) *Error {
 		}
 		codeEnum = api.ErrorCode(code)
 	}
+	// todo: wrap here?
 	return &Error{
 		err: api.Error{
 			Code:   &code,
@@ -56,7 +58,30 @@ func NewRequestError(req *http.Request, code int32, detail string) *Error {
 	return err
 }
 
-// handleError is the default error handler
+// NewQuietWrap creates a quiet *wrapped* error that does not return a body
+func NewQuietWrap(req *http.Request, code int32, detail string) error {
+	err := NewError(code, detail)
+	if req != nil {
+		err.source = req.URL.String()
+	}
+	err.silent = true
+	return errors.Wrap(err, 1)
+}
+
+// NewQuietError logs
+// if e is wrapped:
+func NewQuietError(req *http.Request, code int32, e error) error {
+	// e is a wrapped error, updated the original error to be an *Error with silent=true
+	wrapped, ok := e.(*errors.Error)
+	if ok {
+		wrapped.Err = NewError(code, wrapped.Err.Error())
+		return wrapped
+	}
+	// e is not a wrapped error, so create a new quiet error
+	return NewQuietWrap(req, code, e.Error())
+}
+
+// HandleError is the default error handler
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) {
 	switch err {
 	case ErrNotFound:
@@ -68,17 +93,21 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	}
 
 	switch e := err.(type) {
-	// handle wrapped error
+	// handle wrapped error created by errors.Wrap
 	case *errors.Error:
-		s := e.StackFrames()[0]
-		f := path.Base(s.File)
-		m.Logger.Errorf("[%s/%s:%d] %v", s.Package, f, s.LineNumber, e.Error())
-		// recurse on the err: it is either a known Error or unknown error
+		// log the stack trace and then recurse on the original err, which
+		// is either a known *Error or unknown error
+		m.Logger.Error(errString(err))
 		m.HandleError(rw, req, e.Err)
 		return
 
 	case *Error:
-		m.SimpleError(rw, e)
+		if e.silent {
+			m.Logger.Error(e, "(quiet)")
+			rw.WriteHeader(int(e.err.GetCode()))
+		} else {
+			m.SimpleError(rw, e)
+		}
 		return
 
 	default:
@@ -91,22 +120,27 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	}
 }
 
-// QuietError logs an error and returns the given status without a body
-func (m *Module) QuietError(rw http.ResponseWriter, status int, err error) {
-	m.Logger.Errorf("%d %s", status, err)
-	rw.WriteHeader(status)
-}
-
 // SimpleError responds with err.Error() as the detail of a JSON error response.
 func (m *Module) SimpleError(rw http.ResponseWriter, err *Error) error {
-	return m.Error(rw, int(err.err.GetCode()), &err.err)
+	return m.Error(rw, err.err.GetCode(), &err.err)
 }
 
-func (m *Module) Error(rw http.ResponseWriter, status int, errors ...*api.Error) error {
+func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Error) error {
 	for _, err := range errors {
 		m.Logger.Error(err)
 	}
-	return Proto(rw, status, &api.ErrorResponse{
+	return Proto(rw, int(status), &api.ErrorResponse{
 		Errors: errors,
 	})
+}
+
+// errString prints out an error, with its location if appropriate
+func errString(err error) string {
+	e, ok := err.(*errors.Error)
+	if !ok {
+		return err.Error()
+	}
+	s := e.StackFrames()[0]
+	f := path.Base(s.File)
+	return fmt.Sprintf("[%s/%s:%d] %v", s.Package, f, s.LineNumber, e.Error())
 }
