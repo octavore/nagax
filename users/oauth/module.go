@@ -19,8 +19,6 @@ const (
 	defaultPostOAuthRedirectPath = "/"
 )
 
-type errorHandler func(http.ResponseWriter, *http.Request, error)
-
 // UserStore is an interface for managing users by oauth id
 type UserStore interface {
 	Create(*oauth2.Token) (id string, err error)
@@ -37,14 +35,13 @@ type Module struct {
 	Sessions *session.Module // todo: make this an interface
 	Logger   *logger.Module
 
-	postOAuthRedirectPath string
-	oauthCallbackPath     string
-	loginURL              string
-	userStore             UserStore
-	errorHandler          errorHandler
-	setOAuthState         func(req *http.Request) string
-	oauthConfig           *oauth2.Config
-	oauthOptions          []oauth2.AuthCodeOption
+	postOAuthRedirectPath   string
+	oauthCallbackPath       string
+	loginURL                string
+	userStore               UserStore
+	setOAuthState           func(req *http.Request) string
+	oauthConfig             *oauth2.Config
+	oauthOptions            []oauth2.AuthCodeOption
 	getCallbackRedirectPath func(userToken string, state string) *url.URL
 }
 
@@ -57,8 +54,8 @@ func (m *Module) Init(c *service.Config) {
 	}
 
 	c.Start = func() {
-		m.Router.HandleFunc(m.loginURL, m.handleOAuthStart)
-		m.Router.HandleFunc(m.oauthCallbackPath, m.handleOAuthCallback)
+		m.Router.GET(m.loginURL, m.handleOAuthStart)
+		m.Router.POST(m.oauthCallbackPath, m.handleOAuthCallback)
 		if m.userStore == nil {
 			panic("oauth.UserStore is required")
 		}

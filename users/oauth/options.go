@@ -15,12 +15,6 @@ func WithUserStore(u UserStore) option {
 	}
 }
 
-func WithErrorHandler(e errorHandler) option {
-	return func(m *Module) {
-		m.errorHandler = e
-	}
-}
-
 func WithRedirectPath(url string) option {
 	return func(m *Module) {
 		m.postOAuthRedirectPath = url

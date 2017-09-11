@@ -5,23 +5,24 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/octavore/nagax/router"
+	"github.com/octavore/nagax/util/errors"
+
 	"golang.org/x/oauth2"
 )
 
-func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) {
+func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request, _ router.Params) error {
 	// oauth handshake
 	code := req.FormValue("code")
 	accessToken, err := m.oauthConfig.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		m.errorHandler(rw, req, err)
-		return
+		return errors.Wrap(err)
 	}
 
 	// convert access token to user
 	userToken, err := getOrCreateUser(m.userStore, accessToken)
 	if err != nil {
-		m.errorHandler(rw, req, err)
-		return
+		return errors.Wrap(err)
 	}
 
 	// get the URL to redirect to
@@ -60,8 +61,8 @@ func (m *Module) handleOAuthCallback(rw http.ResponseWriter, req *http.Request) 
 
 	err = m.Sessions.CreateSession(userToken, rw)
 	if err != nil {
-		m.errorHandler(rw, req, err)
-		return
+		return errors.Wrap(err)
 	}
 	http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
+	return nil
 }
