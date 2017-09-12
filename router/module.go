@@ -10,6 +10,7 @@ import (
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/router/middleware"
+	"github.com/octavore/nagax/util/errors"
 )
 
 type Params = httprouter.Params
@@ -34,8 +35,9 @@ type Module struct {
 	ErrorHandler HandleError
 	Middleware   *middleware.MiddlewareServer
 
-	config Config
 	ErrorPage func(rw http.ResponseWriter, req *http.Request, status int)
+	config    Config
+	server    *http.Server
 }
 
 // Init implements service.Init
@@ -58,7 +60,15 @@ func (m *Module) Init(c *service.Config) {
 	c.Start = func() {
 		laddr := m.laddr()
 		m.Logger.Infof("listening on %s", laddr)
-		go http.ListenAndServe(laddr, m.Middleware)
+		m.server = &http.Server{Addr: laddr, Handler: m.Middleware}
+		go m.server.ListenAndServe()
+	}
+
+	c.Stop = func() {
+		err := m.server.Close()
+		if err != nil {
+			m.Logger.Error(errors.Wrap(err))
+		}
 	}
 }
 

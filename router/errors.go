@@ -17,9 +17,10 @@ var (
 )
 
 type Error struct {
-	err    api.Error
-	source string
-	silent bool
+	err      api.Error
+	source   string
+	silent   bool
+	redirect bool
 }
 
 func (e *Error) Error() string {
@@ -29,8 +30,8 @@ func (e *Error) Error() string {
 	return e.err.String()
 }
 
-// NewError creates an Error with the appropriate enum for the code.
-func NewError(code int32, detail string) *Error {
+// newError creates an Error with the appropriate enum for the code.
+func newError(code int32, detail, source string, silent, redirect bool) error {
 	codeEnum := api.ErrorCode(code)
 	_, ok := api.ErrorCode_name[code]
 	if !ok {
@@ -41,8 +42,10 @@ func NewError(code int32, detail string) *Error {
 		}
 		codeEnum = api.ErrorCode(code)
 	}
-	// todo: wrap here?
 	return &Error{
+		silent:   silent,
+		redirect: redirect,
+		source:   source,
 		err: api.Error{
 			Code:   &code,
 			Title:  codeEnum.Enum(),
@@ -52,36 +55,31 @@ func NewError(code int32, detail string) *Error {
 }
 
 // NewRequestError creates an Error with source set to the request url
-func NewRequestError(req *http.Request, code int32, detail string) *Error {
-	err := NewError(code, detail)
-	err.source = req.URL.String()
-	return err
+func NewRequestError(req *http.Request, code int32, detail string) error {
+	return newError(code, detail, req.URL.String(), false, false)
 }
 
 // NewQuietWrap creates a quiet *wrapped* error that does not return a body
 func NewQuietWrap(req *http.Request, code int32, detail string) error {
-	err := NewError(code, detail)
-	if req != nil {
-		err.source = req.URL.String()
-	}
-	err.silent = true
+	err := newError(code, detail, req.URL.String(), true, false)
 	return errors.Wrap(err, 1)
 }
 
-// NewQuietError logs
-// if e is wrapped:
+// NewQuietError logs the error but does not show it to the user
 func NewQuietError(req *http.Request, code int32, e error) error {
-	// e is a wrapped error, updated the original error to be an *Error with silent=true
-	wrapped, ok := e.(*errors.Error)
-	if ok {
-		wrapped.Err = NewError(code, wrapped.Err.Error())
-		return wrapped
-	}
-	// e is not a wrapped error, so create a new quiet error
-	return NewQuietWrap(req, code, e.Error())
+	err := newError(code, errString(e), req.URL.String(), true, false)
+	return errors.Wrap(err, 1)
+}
+
+// NewRedirectingError creates an Error with source set to the request url
+// and the redirect flag set to true, which will
+func NewRedirectingError(req *http.Request, code int32, e error) error {
+	err := newError(code, errString(e), req.URL.String(), false, true)
+	return errors.Wrap(err, 1)
 }
 
 // HandleError is the default error handler
+// TODO: needs to handle API vs non-API errors??
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) {
 	switch err {
 	case ErrNotFound:
@@ -102,9 +100,13 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 		return
 
 	case *Error:
+		status := int(e.err.GetCode())
 		if e.silent {
 			m.Logger.Error(e, "(quiet)")
-			rw.WriteHeader(int(e.err.GetCode()))
+			rw.WriteHeader(status)
+		} else if e.redirect {
+			m.Logger.Error(e, "(redirect)")
+			m.ErrorPage(rw, req, status)
 		} else {
 			m.SimpleError(rw, e)
 		}
@@ -112,7 +114,8 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 
 	default:
 		m.Logger.Errorf(`code:500: detail:"%v"`, e)
-		err := NewRequestError(req, http.StatusInternalServerError, "internal server error")
+		err := newError(http.StatusInternalServerError, "internal server error", req.URL.String(), false, false).(*Error)
+
 		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{
 			Errors: []*api.Error{&err.err},
 		})
@@ -120,7 +123,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	}
 }
 
-// SimpleError responds with err.Error() as the detail of a JSON error response.
+// SimpleError responds with err.Error() as the "internal server error" of a JSON error response.
 func (m *Module) SimpleError(rw http.ResponseWriter, err *Error) error {
 	return m.Error(rw, err.err.GetCode(), &err.err)
 }
@@ -142,5 +145,9 @@ func errString(err error) string {
 	}
 	s := e.StackFrames()[0]
 	f := path.Base(s.File)
-	return fmt.Sprintf("[%s/%s:%d] %v", s.Package, f, s.LineNumber, e.Error())
+	prefix := fmt.Sprintf("[%s/%s:%d]", s.Package, f, s.LineNumber)
+	if e.Error() == "" {
+		return prefix
+	}
+	return fmt.Sprint(prefix, " ", e.Error())
 }
