@@ -35,6 +35,7 @@ type Module struct {
 	Middleware   *middleware.MiddlewareServer
 
 	config Config
+	ErrorPage func(rw http.ResponseWriter, req *http.Request, status int)
 }
 
 // Init implements service.Init
@@ -42,6 +43,9 @@ func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.HTTPRouter = httprouter.New()
 		m.ErrorHandler = m.HandleError
+		m.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int) {
+			http.Error(rw, fmt.Sprint(status), status)
+		}
 
 		// root handler
 		m.Root = http.NewServeMux()
