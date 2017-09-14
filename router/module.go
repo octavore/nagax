@@ -104,6 +104,11 @@ func (m *Module) PATCH(path string, h Handle) {
 	m.HTTPRouter.PATCH(path, m.wrap(h))
 }
 
+// DELETE is a shortcut for m.HTTPRouter.DELETE
+func (m *Module) DELETE(path string, h Handle) {
+	m.HTTPRouter.DELETE(path, m.wrap(h))
+}
+
 // Handle is a shortcut for m.HTTPRouter.Handle
 func (m *Module) Handle(method, path string, h http.HandlerFunc) {
 	m.HTTPRouter.Handle(method, path, func(rw http.ResponseWriter, req *http.Request, _ Params) {
