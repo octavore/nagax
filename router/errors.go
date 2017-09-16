@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	ErrNotFound  = fmt.Errorf("not found")
-	ErrForbidden = fmt.Errorf("forbidden")
-	ErrInternal  = fmt.Errorf("internal server error")
+	ErrNotFound      = fmt.Errorf("not found")
+	ErrNotAuthorized = fmt.Errorf("not authorized")
+	ErrForbidden     = fmt.Errorf("forbidden")
+	ErrInternal      = fmt.Errorf("internal server error")
 )
 
 type Error struct {
@@ -84,6 +85,8 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	switch err {
 	case ErrNotFound:
 		err = NewRequestError(req, http.StatusNotFound, "not found")
+	case ErrNotAuthorized:
+		err = NewRequestError(req, http.StatusUnauthorized, "not authenticated")
 	case ErrForbidden:
 		err = NewRequestError(req, http.StatusForbidden, "forbidden")
 	case ErrInternal:

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/octavore/naga/service"
+	"github.com/octavore/nagax/router"
 	"github.com/octavore/nagax/users"
 )
 
@@ -52,7 +53,7 @@ func (m *Module) Authenticate(rw http.ResponseWriter, req *http.Request) (bool, 
 	token := parts[1]
 	userID := m.tokenSource.Get(token)
 	if userID == nil {
-		return false, nil, users.ErrNotAuthorized
+		return false, nil, router.ErrNotAuthorized
 	}
 	return true, userID, nil
 }

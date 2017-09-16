@@ -2,7 +2,6 @@ package users
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"github.com/octavore/nagax/router"
@@ -32,8 +31,6 @@ func (m *Module) WithAuthList(authenticators []Authenticator, next router.Handle
 	}
 }
 
-var ErrNotAuthorized = errors.New("not authorized") // todo: make this better
-
 func (m *Module) MustWithAuthList(authenticators []Authenticator, next router.Handle) router.Handle {
 	return func(rw http.ResponseWriter, req *http.Request, par router.Params) error {
 		handled, userToken, err := m.authenticate(authenticators, rw, req)
@@ -42,7 +39,7 @@ func (m *Module) MustWithAuthList(authenticators []Authenticator, next router.Ha
 		}
 
 		if !handled || userToken == nil {
-			return ErrNotAuthorized
+			return router.ErrNotAuthorized
 		}
 
 		ctx := context.WithValue(req.Context(), UserTokenKey{}, *userToken)
