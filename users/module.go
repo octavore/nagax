@@ -10,7 +10,6 @@ import (
 
 type Module struct {
 	Logger            *logger.Module
-	ErrorHandler      func(http.ResponseWriter, *http.Request, error)
 	BaseAuthenticator Authenticator // defaults to MultiAuthenticate
 	Authenticators    []Authenticator
 }

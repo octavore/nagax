@@ -42,7 +42,6 @@ func (m *Module) MustWithAuthList(authenticators []Authenticator, next router.Ha
 		}
 
 		if !handled || userToken == nil {
-			m.ErrorHandler(rw, req, ErrNotAuthorized)
 			return ErrNotAuthorized
 		}
 
