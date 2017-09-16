@@ -55,7 +55,7 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Start = func() {
 		m.Router.GET(m.loginURL, m.handleOAuthStart)
-		m.Router.POST(m.oauthCallbackPath, m.handleOAuthCallback)
+		m.Router.GET(m.oauthCallbackPath, m.handleOAuthCallback)
 		if m.userStore == nil {
 			panic("oauth.UserStore is required")
 		}
