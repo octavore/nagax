@@ -80,8 +80,7 @@ func NewRedirectingError(req *http.Request, code int32, e error) error {
 }
 
 // HandleError is the default error handler
-// TODO: needs to handle API vs non-API errors??
-func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) {
+func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) int {
 	switch err {
 	case ErrNotFound:
 		err = NewRequestError(req, http.StatusNotFound, "not found")
@@ -99,8 +98,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 		// log the stack trace and then recurse on the original err, which
 		// is either a known *Error or unknown error
 		m.Logger.Error(errString(err))
-		m.HandleError(rw, req, e.Err)
-		return
+		return m.HandleError(rw, req, e.Err)
 
 	case *Error:
 		status := int(e.err.GetCode())
@@ -113,7 +111,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 		} else {
 			m.SimpleError(rw, e)
 		}
-		return
+		return status
 
 	default:
 		m.Logger.Errorf(`code:500: detail:"%v"`, e)
@@ -122,7 +120,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{
 			Errors: []*api.Error{&err.err},
 		})
-		return
+		return http.StatusInternalServerError
 	}
 }
 

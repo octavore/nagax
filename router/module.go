@@ -44,7 +44,9 @@ type Module struct {
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.HTTPRouter = httprouter.New()
-		m.ErrorHandler = m.HandleError
+		m.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+			_ = m.HandleError(rw, req, err)
+		}
 		m.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int) {
 			http.Error(rw, fmt.Sprint(status), status)
 		}
