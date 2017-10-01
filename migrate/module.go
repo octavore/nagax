@@ -32,8 +32,9 @@ type Module struct {
 
 // Config for migrate module
 type Config struct {
-	Datasources   map[string]Datasource `json:"datasources"`
-	MigrationsDir string                `json:"migrations"`
+	Datasources     map[string]Datasource `json:"datasources"`
+	MigrationsDir   string                `json:"migrations"`
+	MigrationsTable string                `json:"migrations_table"`
 }
 
 // Datasource is parsed from the config
@@ -92,6 +93,9 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Setup = func() error {
 		err := m.Config.ReadConfig(&m.config)
+		if m.config.MigrationsTable != "" {
+			migrate.SetTable(m.config.MigrationsTable)
+		}
 		return err
 	}
 
