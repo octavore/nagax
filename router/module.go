@@ -22,7 +22,8 @@ type (
 
 // Config for the router module
 type Config struct {
-	Port int `json:"port"`
+	Port         int  `json:"port"`
+	BindExternal bool `json:"bindext"`
 }
 
 // Module router implements basic routing with helpers for protobuf-rootd responses.
@@ -82,6 +83,9 @@ func (m *Module) laddr() string {
 		if port == 80 || port == 443 {
 			iface = "0.0.0.0"
 		}
+	}
+	if m.config.BindExternal {
+		iface = "0.0.0.0"
 	}
 	return fmt.Sprintf("%s:%d", iface, port)
 }
