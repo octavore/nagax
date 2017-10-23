@@ -131,7 +131,11 @@ func (m *Module) SimpleError(rw http.ResponseWriter, err *Error) error {
 
 func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Error) error {
 	for _, err := range errors {
-		m.Logger.Error(err)
+		if err.Code == nil || err.GetCode() >= 500 || status >= 500 {
+			m.Logger.Error(err)
+		} else {
+			m.Logger.Warning(err)
+		}
 	}
 	return Proto(rw, int(status), &api.ErrorResponse{
 		Errors: errors,
