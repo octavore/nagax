@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"reflect"
 
 	"github.com/octavore/naga/service"
 )
@@ -22,11 +23,14 @@ type Module struct {
 	// Alternatively, you can set Byte directly to the desired config
 	// file contents.
 	TestConfigPath string
+
+	configDefs []reflect.Type
 }
 
 // Init implements the module interface method
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
+		m.configDefs = []reflect.Type{}
 		switch {
 		case m.ConfigPath != "":
 		// do nothing
@@ -80,6 +84,7 @@ func (m *Module) LoadConfig(path string) error {
 // ReadConfig json-decodes the config file bytes into i, which should be a pointer
 // to a struct.
 func (m *Module) ReadConfig(i interface{}) error {
+	m.configDefs = append(m.configDefs, reflect.TypeOf(i))
 	return json.Unmarshal(m.Byte, i)
 }
 
