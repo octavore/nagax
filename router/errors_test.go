@@ -12,15 +12,15 @@ import (
 func TestNewRequestError_400(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test-request-error", nil)
 	err := NewRequestError(req, http.StatusBadRequest, "request error")
-	expectedStr := `code:400 title:bad_request detail:"request error" `
-	assert.EqualError(t, err, "/test-request-error: "+expectedStr)
+	expectedStr := `/test-request-error: code:400 title:bad_request detail:"request error" `
+	assert.EqualError(t, err, expectedStr)
 
 	env := setup()
 	defer env.stop()
 	rr := httptest.NewRecorder()
 	env.module.HandleError(rr, req, err)
-	assert.Equal(t, len(env.logger.Errors), 1)
-	assert.Equal(t, env.logger.Errors[0], expectedStr)
+	assert.Equal(t, len(env.logger.Warnings), 1)
+	assert.Equal(t, env.logger.Warnings[0], expectedStr)
 	assert.Equal(t, rr.Code, http.StatusBadRequest)
 	assert.JSONEq(t, rr.Body.String(), `{
 		"errors": [{
@@ -34,20 +34,20 @@ func TestNewRequestError_400(t *testing.T) {
 func TestNewQuietWrap_400(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test-quiet-error", nil)
 	err := NewQuietWrap(req, http.StatusBadRequest, "request error")
-	expectedStr := `code:400 title:bad_request detail:"request error" `
-	prefixedStr := "/test-quiet-error: " + expectedStr
-	assert.EqualError(t, err, prefixedStr)
+	expectedStr := `/test-quiet-error: code:400 title:bad_request detail:"request error"  (silent)`
+	assert.EqualError(t, err, expectedStr)
 
 	env := setup()
 	defer env.stop()
 	rr := httptest.NewRecorder()
 	env.module.HandleError(rr, req, err)
-	assert.Equal(t, len(env.logger.Errors), 2)
+	assert.Equal(t, 0, len(env.logger.Errors))
+	assert.Equal(t, 2, len(env.logger.Warnings))
 	// log for wrapper
-	assert.Equal(t, env.logger.Errors[0],
-		`[github.com/octavore/nagax/router/errors_test.go:36] `+prefixedStr)
+	assert.Equal(t, env.logger.Warnings[0],
+		`[github.com/octavore/nagax/router/errors_test.go:36] `+expectedStr)
 	// log for error
-	assert.Equal(t, env.logger.Errors[1], prefixedStr+"(quiet)")
+	assert.Equal(t, env.logger.Warnings[1], expectedStr)
 	assert.Equal(t, rr.Code, http.StatusBadRequest)
 	assert.Equal(t, rr.Body.String(), "")
 }
@@ -56,20 +56,20 @@ func TestNewQuietError_400(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test-quiet-wrap", nil)
 	originalErr := fmt.Errorf("hidden error")
 	err := NewQuietError(req, http.StatusBadRequest, originalErr)
-	expectedStr := `code:400 title:bad_request detail:"hidden error" `
-	prefixedStr := "/test-quiet-wrap: " + expectedStr
-	assert.EqualError(t, err, prefixedStr)
+	expectedStr := `/test-quiet-wrap: code:400 title:bad_request detail:"hidden error"  (silent)`
+	assert.EqualError(t, err, expectedStr)
 
 	env := setup()
 	defer env.stop()
 	rr := httptest.NewRecorder()
 	env.module.HandleError(rr, req, err)
-	assert.Equal(t, len(env.logger.Errors), 2)
+	assert.Equal(t, 0, len(env.logger.Errors))
+	assert.Equal(t, 2, len(env.logger.Warnings))
 	// log for wrapper
-	assert.Equal(t, env.logger.Errors[0],
-		`[github.com/octavore/nagax/router/errors_test.go:58] `+prefixedStr)
+	assert.Equal(t, env.logger.Warnings[0],
+		`[github.com/octavore/nagax/router/errors_test.go:58] `+expectedStr)
 	// log for error
-	assert.Equal(t, env.logger.Errors[1], prefixedStr+"(quiet)")
+	assert.Equal(t, env.logger.Warnings[1], expectedStr)
 	assert.Equal(t, rr.Code, http.StatusBadRequest)
 	assert.Equal(t, rr.Body.String(), "")
 }
@@ -78,9 +78,8 @@ func TestNewRedirectingError_400(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test-redirected", nil)
 	originalErr := fmt.Errorf("hidden error")
 	err := NewRedirectingError(req, http.StatusBadRequest, originalErr)
-	expectedStr := `code:400 title:bad_request detail:"hidden error" `
-	prefixedStr := "/test-redirected: " + expectedStr
-	assert.EqualError(t, err, prefixedStr)
+	expectedStr := `/test-redirected: code:400 title:bad_request detail:"hidden error"  (redirect)`
+	assert.EqualError(t, err, expectedStr)
 
 	env := setup()
 	defer env.stop()
@@ -94,10 +93,11 @@ func TestNewRedirectingError_400(t *testing.T) {
 	}
 
 	env.module.HandleError(rr, req, err)
-	assert.Equal(t, len(env.logger.Errors), 2)
-	assert.Equal(t, env.logger.Errors[0],
-		`[github.com/octavore/nagax/router/errors_test.go:80] `+prefixedStr)
-	assert.Equal(t, env.logger.Errors[1], prefixedStr+"(redirect)")
+	assert.Equal(t, len(env.logger.Errors), 0)
+	assert.Equal(t, len(env.logger.Warnings), 2)
+	assert.Equal(t, env.logger.Warnings[0],
+		`[github.com/octavore/nagax/router/errors_test.go:80] `+expectedStr)
+	assert.Equal(t, env.logger.Warnings[1], expectedStr)
 	assert.Equal(t, rr.Code, http.StatusTemporaryRedirect)
 	assert.Equal(t, rr.Body.String(), "<a href=\"/\">Temporary Redirect</a>.\n\n")
 	assert.Equal(t, errorPageCalls, 1)

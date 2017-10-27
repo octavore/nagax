@@ -17,22 +17,35 @@ var (
 	ErrInternal      = fmt.Errorf("internal server error")
 )
 
+// Error wraps an api.Error return object
 type Error struct {
 	err      api.Error
 	source   string
 	silent   bool
 	redirect bool
+	request  *http.Request
 }
 
 func (e *Error) Error() string {
+	errStr := e.err.String()
 	if e.source != "" {
-		return e.source + ": " + e.err.String()
+		errStr = e.source + ": " + errStr
 	}
-	return e.err.String()
+	if e.silent {
+		errStr = errStr + " (silent)"
+	}
+	if e.redirect {
+		errStr = errStr + " (redirect)"
+	}
+	return errStr
+}
+
+func (e *Error) GetRequest() *http.Request {
+	return e.request
 }
 
 // newError creates an Error with the appropriate enum for the code.
-func newError(code int32, detail, source string, silent, redirect bool) error {
+func newAPIError(code int32, detail string) api.Error {
 	codeEnum := api.ErrorCode(code)
 	_, ok := api.ErrorCode_name[code]
 	if !ok {
@@ -43,47 +56,63 @@ func newError(code int32, detail, source string, silent, redirect bool) error {
 		}
 		codeEnum = api.ErrorCode(code)
 	}
-	return &Error{
-		silent:   silent,
-		redirect: redirect,
-		source:   source,
-		err: api.Error{
-			Code:   &code,
-			Title:  codeEnum.Enum(),
-			Detail: &detail,
-		},
+	return api.Error{
+		Code:   &code,
+		Title:  codeEnum.Enum(),
+		Detail: &detail,
 	}
 }
 
 // NewRequestError creates an Error with source set to the request url
 func NewRequestError(req *http.Request, code int32, detail string) error {
-	return newError(code, detail, req.URL.String(), false, false)
+	return &Error{
+		silent:   false,
+		redirect: false,
+		source:   req.URL.String(),
+		request:  req,
+		err:      newAPIError(code, detail),
+	}
 }
 
 // NewQuietWrap creates a quiet *wrapped* error that does not return a body
 func NewQuietWrap(req *http.Request, code int32, detail string) error {
-	err := newError(code, detail, req.URL.String(), true, false)
-	return errors.Wrap(err, 1)
+	return errors.Wrap(&Error{
+		silent:   true,
+		redirect: false,
+		source:   req.URL.String(),
+		request:  req,
+		err:      newAPIError(code, detail),
+	}, 1)
 }
 
 // NewQuietError logs the error but does not show it to the user
 func NewQuietError(req *http.Request, code int32, e error) error {
-	err := newError(code, errString(e), req.URL.String(), true, false)
-	return errors.Wrap(err, 1)
+	return errors.Wrap(&Error{
+		silent:   true,
+		redirect: false,
+		source:   req.URL.String(),
+		request:  req,
+		err:      newAPIError(code, errString(e)),
+	}, 1)
 }
 
 // NewRedirectingError creates an Error with source set to the request url
 // and the redirect flag set to true, which will
 func NewRedirectingError(req *http.Request, code int32, e error) error {
-	err := newError(code, errString(e), req.URL.String(), false, true)
-	return errors.Wrap(err, 1)
+	return errors.Wrap(&Error{
+		silent:   false,
+		redirect: true,
+		source:   req.URL.String(),
+		request:  req,
+		err:      newAPIError(code, errString(e)),
+	}, 1)
 }
 
 // HandleError is the default error handler
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) int {
 	switch err {
 	case ErrNotFound:
-		err = NewRequestError(req, http.StatusNotFound, "not found")
+		err = NewRequestError(req, http.StatusNotFound, "not found: "+req.URL.String())
 	case ErrNotAuthorized:
 		err = NewRequestError(req, http.StatusUnauthorized, "not authenticated")
 	case ErrForbidden:
@@ -95,38 +124,33 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	switch e := err.(type) {
 	// handle wrapped error created by errors.Wrap
 	case *errors.Error:
-		// log the stack trace and then recurse on the original err, which
+		// log (warn) the stack trace and then recurse on the original err, which
 		// is either a known *Error or unknown error
-		m.Logger.Error(errString(err))
+		m.Logger.Warning(errString(err))
 		return m.HandleError(rw, req, e.Err)
 
 	case *Error:
 		status := int(e.err.GetCode())
+		if status >= 500 {
+			m.Logger.Error(err)
+		} else {
+			m.Logger.Warning(err)
+		}
 		if e.silent {
-			m.Logger.Error(e, "(quiet)")
 			rw.WriteHeader(status)
 		} else if e.redirect {
-			m.Logger.Error(e, "(redirect)")
 			m.ErrorPage(rw, req, status)
 		} else {
-			m.SimpleError(rw, e)
+			Proto(rw, int(e.err.GetCode()), &api.ErrorResponse{Errors: []*api.Error{&e.err}})
 		}
 		return status
 
 	default:
 		m.Logger.Errorf(`code:500: detail:"%v"`, e)
-		err := newError(http.StatusInternalServerError, "internal server error", req.URL.String(), false, false).(*Error)
-
-		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{
-			Errors: []*api.Error{&err.err},
-		})
+		ae := newAPIError(http.StatusInternalServerError, "internal server error")
+		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{Errors: []*api.Error{&ae}})
 		return http.StatusInternalServerError
 	}
-}
-
-// SimpleError responds with err.Error() as the "internal server error" of a JSON error response.
-func (m *Module) SimpleError(rw http.ResponseWriter, err *Error) error {
-	return m.Error(rw, err.err.GetCode(), &err.err)
 }
 
 func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Error) error {
