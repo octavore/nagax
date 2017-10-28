@@ -146,7 +146,11 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 		return status
 
 	default:
-		m.Logger.Errorf(`code:500: detail:"%v"`, e)
+		// log error with request
+		m.Logger.Error(&Error{
+			request: req,
+			err:     newAPIError(500, errString(e)),
+		})
 		ae := newAPIError(http.StatusInternalServerError, "internal server error")
 		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{Errors: []*api.Error{&ae}})
 		return http.StatusInternalServerError
