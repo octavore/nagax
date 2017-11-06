@@ -30,6 +30,8 @@ func (e *Error) Error() string {
 	errStr := e.err.String()
 	if e.source != "" {
 		errStr = e.source + ": " + errStr
+	} else if e.request != nil {
+		errStr = e.request.URL.Path + ": " + errStr
 	}
 	if e.silent {
 		errStr = errStr + " (silent)"
@@ -132,7 +134,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	case *Error:
 		status := int(e.err.GetCode())
 		if status >= 500 {
-			m.Logger.Error(err)
+			m.Logger.Error(e) // log the original error (with request)
 		} else {
 			m.Logger.Warning(err)
 		}
