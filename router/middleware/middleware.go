@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 )
@@ -56,6 +57,16 @@ func (m *MiddlewareServer) Rebuild() {
 		}
 	}
 	m.serve = serve
+}
+
+func (m *MiddlewareServer) List() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	lst := []string{}
+	for _, mw := range m.middlewareList {
+		lst = append(lst, fmt.Sprintf("%T", mw))
+	}
+	return lst
 }
 
 func (m *MiddlewareServer) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
