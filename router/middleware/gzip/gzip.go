@@ -4,9 +4,23 @@ import (
 	"compress/gzip"
 	"net/http"
 	"path"
+	"strings"
 
 	"github.com/NYTimes/gziphandler"
 )
+
+var allowedTypes = map[string]bool{
+	".html":  true,
+	".js":    true,
+	".css":   true,
+	".map":   true,
+	".png":   true,
+	".jpg":   true,
+	".jpeg":  true,
+	".gif":   true,
+	".woff":  true,
+	".woff2": true,
+}
 
 var Default = New(gzip.DefaultCompression)
 
@@ -14,12 +28,12 @@ func New(lvl int) func(rw http.ResponseWriter, req *http.Request, next http.Hand
 	handler := gziphandler.MustNewGzipLevelHandler(lvl)
 
 	return func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-		// todo: whitelist gzippable data
-		if path.Ext(req.URL.Path) == "" {
-			next(rw, req)
+		ext := strings.ToLower(path.Ext(req.URL.Path))
+		if allowedTypes[ext] {
+			handle := handler(next)
+			handle.ServeHTTP(rw, req)
 			return
 		}
-		handle := handler(next)
-		handle.ServeHTTP(rw, req)
+		next(rw, req)
 	}
 }
