@@ -20,6 +20,7 @@ type csrfPayload struct {
 // newSessionCookie creates a new encrypted cookie for the given UserSession
 func (m *Module) New(state string) (string, error) {
 	b, err := json.Marshal(&csrfPayload{
+		State:       state,
 		Token:       token.New32(),
 		ExpireAfter: time.Now().Add(m.csrfValidityDuration),
 	})
