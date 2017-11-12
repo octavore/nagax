@@ -44,3 +44,9 @@ func WithGetCallbackRedirectPath(getCallbackRedirectPath func(userToken, state s
 		m.getCallbackRedirectPath = getCallbackRedirectPath
 	}
 }
+
+func WithLoginURL(loginURL string) option {
+	return func(m *Module) {
+		m.loginURL = loginURL
+	}
+}
