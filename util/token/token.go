@@ -3,15 +3,13 @@ package token
 import (
 	"crypto/rand"
 	"encoding/base32"
-	"encoding/base64"
+	"strings"
 )
 
+var encoder = base32.NewEncoding("0123456789abcdefghjkmnpqrstvwxyz")
+
 func New64() string {
-	b, err := RandN(8)
-	if err != nil {
-		panic(err)
-	}
-	return base64.StdEncoding.EncodeToString(b)
+	return New(8)
 }
 
 func RandN(n int) ([]byte, error) {
@@ -24,9 +22,13 @@ func RandN(n int) ([]byte, error) {
 }
 
 func New32() string {
-	b, err := RandN(5)
+	return New(5)
+}
+
+func New(n int) string {
+	b, err := RandN(n)
 	if err != nil {
 		panic(err)
 	}
-	return base32.StdEncoding.EncodeToString(b)
+	return strings.TrimRight(encoder.EncodeToString(b), "=")
 }
