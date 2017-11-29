@@ -29,7 +29,12 @@ type Module struct {
 func (m *Module) Init(c *service.Config) {
 }
 
-func (m *Module) New() func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	ignoreMap := map[string]bool{}
+	for _, url := range ignorePaths {
+		ignoreMap[url] = true
+	}
+
 	return func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		if !csrfWhitelist[req.Method] {
 			session, err := m.Session.Verify(req)
@@ -39,7 +44,7 @@ func (m *Module) New() func(rw http.ResponseWriter, req *http.Request, next http
 			}
 			// only check csrf if user is logged in
 			// don't check csrf for logged out users right now
-			if session != "" {
+			if session != "" && !ignoreMap[req.URL.Path] {
 				csrfToken := req.Header.Get("x-csrf-token")
 				ok, err := m.CSRF.Verify(session, csrfToken)
 				if err != nil {
