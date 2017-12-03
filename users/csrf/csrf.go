@@ -17,7 +17,7 @@ type csrfPayload struct {
 	ExpireAfter time.Time
 }
 
-// newSessionCookie creates a new encrypted cookie for the given UserSession
+// New creates a new encrypted token for the given UserSession
 func (m *Module) New(state string) (string, error) {
 	b, err := json.Marshal(&csrfPayload{
 		State:       state,
@@ -41,6 +41,24 @@ func (m *Module) New(state string) (string, error) {
 	return msg, nil
 }
 
+// Decode an encrypted token
+func (m *Module) Decode(token string) (*csrfPayload, error) {
+	obj, err := jose.ParseEncrypted(token)
+	if err != nil {
+		return nil, err
+	}
+	b, err := obj.Decrypt(m.decryptionKey)
+	csrfPayload := &csrfPayload{}
+	if err = json.Unmarshal(b, csrfPayload); err != nil {
+		return nil, err
+	}
+	if time.Now().After(csrfPayload.ExpireAfter) {
+		return nil, errors.New("csrf token expired")
+	}
+	return csrfPayload, nil
+}
+
+// Verify an encrypted token
 func (m *Module) Verify(state, token string) (bool, error) {
 	obj, err := jose.ParseEncrypted(token)
 	if err != nil {

@@ -49,7 +49,12 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Start = func() {
 		var err error
-		m.encrypter, m.decryptionKey, err = loadKeys(m.keyFile, m.keyStore)
+		privateKey, publicKey, err := loadKeys(m.keyFile, m.keyStore)
+		if err != nil {
+			panic(err)
+		}
+		m.decryptionKey = privateKey
+		m.encrypter, err = jose.NewEncrypter(keyAlgorithm, contentEncryption, publicKey)
 		if err != nil {
 			panic(err)
 		}

@@ -4,12 +4,12 @@ import jose "github.com/square/go-jose"
 
 // load keys from the keystore
 // todo: copied from session module, refactor?
-func loadKeys(keyFile string, keyStore KeyStore) (jose.Encrypter, interface{}, error) {
-	privateKey, _, err := keyStore.LoadPrivateKey(keyFile)
+func loadKeys(keyFile string, keyStore KeyStore) (interface{}, interface{}, error) {
+	privateKeyBytes, _, err := keyStore.LoadPrivateKey(keyFile)
 	if err != nil {
 		return nil, nil, err
 	}
-	decryptionKey, err := jose.LoadPrivateKey(privateKey)
+	privateKey, err := jose.LoadPrivateKey(privateKeyBytes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -22,11 +22,5 @@ func loadKeys(keyFile string, keyStore KeyStore) (jose.Encrypter, interface{}, e
 	if err != nil {
 		return nil, nil, err
 	}
-
-	encrypter, err := jose.NewEncrypter(keyAlgorithm, contentEncryption, publicKey)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return encrypter, decryptionKey, err
+	return privateKey, publicKey, nil
 }
