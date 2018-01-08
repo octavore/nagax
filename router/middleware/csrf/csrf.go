@@ -46,10 +46,15 @@ func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *ht
 			// don't check csrf for logged out users right now
 			if session != "" && !ignoreMap[req.URL.Path] {
 				csrfToken := req.Header.Get("x-csrf-token")
-				ok, err := m.CSRF.Verify(session, csrfToken)
-				if err != nil {
-					m.Router.HandleError(rw, req, errors.Wrap(err))
-					return
+				var ok bool
+				if csrfToken == "" {
+					ok = false
+				} else {
+					ok, err = m.CSRF.Verify(session, csrfToken)
+					if err != nil {
+						ok = false
+						m.Logger.Error(errors.Wrap(err))
+					}
 				}
 				if !ok {
 					err := router.NewRequestError(req, http.StatusBadRequest, "invalid csrf token")
