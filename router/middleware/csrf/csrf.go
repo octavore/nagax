@@ -47,6 +47,9 @@ func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *ht
 			if session != "" && !ignoreMap[req.URL.Path] {
 				csrfToken := req.Header.Get("x-csrf-token")
 				var ok bool
+				if csrfToken == "" && req.Method == "POST" {
+					csrfToken = req.PostFormValue("csrfToken")
+				}
 				if csrfToken == "" {
 					ok = false
 				} else {
