@@ -1,7 +1,6 @@
 package databaseauth
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/octavore/naga/service"
@@ -74,7 +73,7 @@ func (m *Module) handleLogin(rw http.ResponseWriter, req *http.Request, par rout
 		return err
 	}
 	if !valid {
-		return errors.New("invalid user")
+		return router.ErrNotAuthorized
 	}
 	err = m.Sessions.CreateSession(userID, rw)
 	if err != nil {
