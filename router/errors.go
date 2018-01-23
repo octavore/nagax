@@ -46,6 +46,10 @@ func (e *Error) GetRequest() *http.Request {
 	return e.request
 }
 
+func (e *Error) GetCode() int32 {
+	return e.err.GetCode()
+}
+
 // newError creates an Error with the appropriate enum for the code.
 func newAPIError(code int32, detail string) api.Error {
 	codeEnum := api.ErrorCode(code)
