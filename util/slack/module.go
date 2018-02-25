@@ -40,14 +40,13 @@ type slackClient interface {
 
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
+		m.client = &dummyClient{logger: m.Logger}
 		return m.Config.ReadConfig(&m.config)
 	}
 
 	c.Start = func() {
 		if m.config.SlackConfig.APIToken != "" {
 			m.client = slack.New(m.config.SlackConfig.APIToken)
-		} else {
-			m.client = &dummyClient{logger: m.Logger}
 		}
 	}
 }
