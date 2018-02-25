@@ -16,6 +16,7 @@ package slack
 import (
 	"github.com/nlopes/slack"
 	"github.com/octavore/naga/service"
+
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/util/errors"
