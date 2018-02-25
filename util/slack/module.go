@@ -28,7 +28,7 @@ type Module struct {
 	client slackClient
 	config struct {
 		SlackConfig struct {
-			Channel string `json:"channel"`
+			Channel  string `json:"channel"`
 			APIToken string `json:"api_token"`
 		} `json:"slack_internal"`
 	}
@@ -55,16 +55,24 @@ func (m *Module) Init(c *service.Config) {
 type PostMessageParameters = slack.PostMessageParameters
 
 // Post a message to the default channel
-func (m *Module) Post(txt string, params PostMessageParameters) {
-	_, _, err := m.client.PostMessage(m.config.SlackConfig.Channel, txt, params)
+func (m *Module) Post(txt string, params *PostMessageParameters) {
+	var p PostMessageParameters
+	if params != nil {
+		p = *params
+	}
+	_, _, err := m.client.PostMessage(m.config.SlackConfig.Channel, txt, p)
 	if err != nil {
 		m.Logger.Error(errors.Wrap(err))
 	}
 }
 
 // PostC posts a message to the given channel
-func (m *Module) PostC(channel, txt string, params PostMessageParameters) {
-	_, _, err := m.client.PostMessage(channel, txt, params)
+func (m *Module) PostC(channel, txt string, params *PostMessageParameters) {
+	var p PostMessageParameters
+	if params != nil {
+		p = *params
+	}
+	_, _, err := m.client.PostMessage(channel, txt, p)
 	if err != nil {
 		m.Logger.Error(errors.Wrap(err))
 	}
