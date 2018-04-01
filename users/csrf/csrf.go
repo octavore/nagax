@@ -62,14 +62,12 @@ func (m *Module) Decode(token string) (*csrfPayload, error) {
 func (m *Module) Verify(state, token string) (bool, error) {
 	obj, err := jose.ParseEncrypted(token)
 	if err != nil {
-		m.Logger.Error(errors.Wrap(err))
-		return false, nil
+		return false, errors.Wrap(err)
 	}
 	b, err := obj.Decrypt(m.decryptionKey)
 	csrfPayload := &csrfPayload{}
 	if err = json.Unmarshal(b, csrfPayload); err != nil {
-		m.Logger.Error(errors.Wrap(err))
-		return false, nil
+		return false, errors.Wrap(err)
 	}
 	if state != csrfPayload.State {
 		return false, nil
