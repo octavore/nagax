@@ -2,6 +2,7 @@ package databaseauth
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/octavore/naga/service"
 
@@ -53,11 +54,13 @@ func (m *Module) Init(c *service.Config) {
 
 // Create a new user
 func (m *Module) Create(email, password string) (string, error) {
+	email = strings.ToLower(email)
 	return m.userStore.Create(email, HashPassword(password, token.New32()))
 }
 
 // Login with email and password, returns user id if valid
 func (m *Module) Login(email, password string) (string, bool, error) {
+	email = strings.ToLower(email)
 	userID, hashedPassword, err := m.userStore.Get(email)
 	if err != nil {
 		return "", false, err
@@ -66,7 +69,7 @@ func (m *Module) Login(email, password string) (string, bool, error) {
 }
 
 func (m *Module) handleLogin(rw http.ResponseWriter, req *http.Request, par router.Params) error {
-	email := req.PostFormValue("email")
+	email := strings.ToLower(req.PostFormValue("email"))
 	password := req.PostFormValue("password")
 	userID, valid, err := m.Login(email, password)
 	if err != nil {
