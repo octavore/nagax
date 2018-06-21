@@ -55,7 +55,7 @@ func (m *Module) Init(c *service.Config) {
 
 // ConnectDefault to the DB with name specified by env
 func (m *Module) ConnectDefault() (*sql.DB, error) {
-	ds, err := m.GetBackend(string(m.env))
+	ds, err := m.GetBackend(m.env.String())
 	if err != nil {
 		return nil, err
 	}
