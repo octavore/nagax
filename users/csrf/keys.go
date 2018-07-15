@@ -1,6 +1,6 @@
 package csrf
 
-import jose "github.com/square/go-jose"
+import jose "gopkg.in/square/go-jose.v1"
 
 // load keys from the keystore
 // todo: copied from session module, refactor?
