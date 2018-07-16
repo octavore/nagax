@@ -1,6 +1,10 @@
 package static
 
-import "github.com/gobuffalo/packr"
+import (
+	"net/http"
+
+	"github.com/gobuffalo/packr"
+)
 
 type option func(m *Module)
 
@@ -27,5 +31,21 @@ func WithStaticBase(dir string) option {
 func WithStaticDirs(dirs ...string) option {
 	return func(m *Module) {
 		m.staticDirs = dirs
+	}
+}
+
+// WithHandle404 configures static module with a base URL path for
+// serving static assets
+func WithHandle404(fn http.HandlerFunc) option {
+	return func(m *Module) {
+		m.handle404 = fn
+	}
+}
+
+// WithHandle500 configures static module with a base URL path for
+// serving static assets
+func WithHandle500(fn func(rw http.ResponseWriter, req *http.Request, err error)) option {
+	return func(m *Module) {
+		m.handle500 = fn
 	}
 }
