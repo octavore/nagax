@@ -50,3 +50,9 @@ func WithLoginURL(loginURL string) option {
 		m.loginURL = loginURL
 	}
 }
+
+func WithOAuthCallbackPath(p string) option {
+	return func(m *Module) {
+		m.oauthCallbackPath = p
+	}
+}
