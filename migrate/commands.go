@@ -3,8 +3,10 @@ package migrate
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/octavore/naga/service"
+	backoff "gopkg.in/cenkalti/backoff.v1"
 )
 
 func (m *Module) registerCommands(c *service.Config) {
@@ -20,7 +22,9 @@ func (m *Module) registerCommands(c *service.Config) {
 				log.Println("migrate:", err)
 				return
 			}
-			err = b.Migrate()
+			err = backoff.RetryNotify(b.Migrate, m.backoff, func(err error, duration time.Duration) {
+				log.Printf("can't connect to mysql: %s, will retry in %s", err, duration)
+			})
 			if err != nil {
 				log.Println("migrate:", err)
 			}

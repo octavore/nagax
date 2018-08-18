@@ -3,6 +3,7 @@ package migrate
 import (
 	"database/sql"
 
+	"github.com/cenkalti/backoff"
 	"github.com/octavore/naga/service"
 	"github.com/rubenv/sql-migrate"
 
@@ -21,6 +22,7 @@ type Module struct {
 
 	config          Config
 	migrationSource migrate.MigrationSource
+	backoff         backoff.BackOff
 
 	suffixForTest string
 	env           service.Environment
@@ -45,6 +47,7 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Setup = func() error {
 		m.env = c.Env()
+		m.backoff = &backoff.StopBackOff{}
 		err := m.Config.ReadConfig(&m.config)
 		if m.config.MigrationsTable != "" {
 			migrate.SetTable(m.config.MigrationsTable)
