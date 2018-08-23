@@ -8,6 +8,7 @@ import (
 	"gopkg.in/cenkalti/backoff.v2"
 
 	"github.com/octavore/nagax/config"
+	"github.com/octavore/nagax/logger"
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 type Module struct {
 	Config *config.Module
 	DB     *sql.DB
+	Logger logger.Logger
 
 	config          Config
 	migrationSource migrate.MigrationSource

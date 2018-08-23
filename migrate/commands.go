@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/octavore/naga/service"
@@ -19,14 +18,14 @@ func (m *Module) registerCommands(c *service.Config) {
 			}
 			b, err := m.GetBackend(ctx.Args[0])
 			if err != nil {
-				log.Println("migrate:", err)
+				m.Logger.Error("migrate:", err)
 				return
 			}
 			err = backoff.RetryNotify(b.Migrate, m.backoff, func(err error, duration time.Duration) {
-				log.Printf("can't connect to mysql: %s, will retry in %s", err, duration)
+				m.Logger.Warningf("can't connect to mysql: %s, will retry in %s", err, duration)
 			})
 			if err != nil {
-				log.Println("migrate:", err)
+				m.Logger.Error("migrate:", err)
 			}
 		},
 	})
@@ -41,16 +40,16 @@ func (m *Module) registerCommands(c *service.Config) {
 			dbname := ctx.Args[0]
 			b, err := m.GetBackend(dbname)
 			if err != nil {
-				log.Println("migrate:", err)
+				m.Logger.Error("migrate:", err)
 				return
 			}
 			err = b.Reset()
 			if err != nil {
-				log.Println("migrate:", err)
+				m.Logger.Error("migrate:", err)
 			}
 			err = b.Migrate()
 			if err != nil {
-				log.Println("migrate:", err)
+				m.Logger.Error("migrate:", err)
 			}
 		},
 	})
