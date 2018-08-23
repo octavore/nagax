@@ -3,9 +3,9 @@ package migrate
 import (
 	"database/sql"
 
-	"github.com/cenkalti/backoff"
 	"github.com/octavore/naga/service"
 	"github.com/rubenv/sql-migrate"
+	"gopkg.in/cenkalti/backoff.v2"
 
 	"github.com/octavore/nagax/config"
 )

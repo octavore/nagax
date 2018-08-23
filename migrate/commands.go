@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/octavore/naga/service"
-	backoff "gopkg.in/cenkalti/backoff.v1"
+	"gopkg.in/cenkalti/backoff.v2"
 )
 
 func (m *Module) registerCommands(c *service.Config) {
