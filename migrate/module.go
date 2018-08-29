@@ -5,8 +5,10 @@ import (
 
 	"github.com/octavore/naga/service"
 	"github.com/rubenv/sql-migrate"
+	"gopkg.in/cenkalti/backoff.v2"
 
 	"github.com/octavore/nagax/config"
+	"github.com/octavore/nagax/logger"
 )
 
 func init() {
@@ -18,9 +20,11 @@ func init() {
 type Module struct {
 	Config *config.Module
 	DB     *sql.DB
+	Logger logger.Logger
 
 	config          Config
 	migrationSource migrate.MigrationSource
+	backoff         backoff.BackOff
 
 	suffixForTest string
 	env           service.Environment
@@ -45,6 +49,7 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Setup = func() error {
 		m.env = c.Env()
+		m.backoff = &backoff.StopBackOff{}
 		err := m.Config.ReadConfig(&m.config)
 		if m.config.MigrationsTable != "" {
 			migrate.SetTable(m.config.MigrationsTable)
