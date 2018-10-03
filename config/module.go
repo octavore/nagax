@@ -97,7 +97,7 @@ func (m *Module) Getenv(key string) string {
 }
 
 func errIfProduction(c *service.Config, err error) error {
-	if c.Env().IsProduction() {
+	if c.Env().IsHosted() {
 		return err
 	}
 	service.BootPrintln(err)
