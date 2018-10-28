@@ -5,7 +5,7 @@ import (
 
 	"github.com/octavore/naga/service"
 	"github.com/rubenv/sql-migrate"
-	"gopkg.in/cenkalti/backoff.v2"
+	backoff "gopkg.in/cenkalti/backoff.v2"
 
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
@@ -20,7 +20,7 @@ func init() {
 type Module struct {
 	Config *config.Module
 	DB     *sql.DB
-	Logger logger.Logger
+	Logger *logger.Module
 
 	config          Config
 	migrationSource migrate.MigrationSource
