@@ -13,10 +13,17 @@ import (
 	"github.com/octavore/nagax/util/errors"
 )
 
+// Params is a type alias for httprouter.Params
 type Params = httprouter.Params
 
 type (
-	Handle      func(rw http.ResponseWriter, req *http.Request, par httprouter.Params) error
+	// Handle is a function that can be registered to a route to handle HTTP
+	// requests. Like httprouter.Handle, but also has an error return. Errors
+	// returned by Handle will be handled by the router's configured ErrorHandler
+	Handle func(rw http.ResponseWriter, req *http.Request, par Params) error
+
+	// HandleError is a function that can be registered as an error handler in the
+	// router. A default implementation is provided: see Module.HandleError
 	HandleError func(rw http.ResponseWriter, req *http.Request, err error)
 )
 
@@ -31,14 +38,27 @@ type Module struct {
 	Logger *logger.Module
 	Config *config.Module
 
-	Root         *http.ServeMux
-	HTTPRouter   *httprouter.Router
-	ErrorHandler HandleError
-	Middleware   *middleware.MiddlewareServer
+	// Root is the entrypoint and delegates to all other routers. If you want to configure
+	// other subrouters, this is the place.
+	Root *http.ServeMux
 
+	// HTTPRouter is listens to "/" on the Root router and is the default top-level router
+	// where routes are configured.
+	HTTPRouter *httprouter.Router
+
+	// Middleware allows middleware to be added. These run for all routes. See the middleware
+	// package for some prebuilt middlewares, e.g. gzip.
+	Middleware *middleware.MiddlewareServer
+
+	// ErrorHandler handles errors returned from routes. A default implementation is provided.
+	ErrorHandler HandleError
+
+	// ErrorPage handles errors which have the redirect flag. This is for displaying user-facing
+	// pages, instead of the usual JSON response.
 	ErrorPage func(rw http.ResponseWriter, req *http.Request, status int)
-	config    Config
-	server    *http.Server
+
+	config Config
+	server *http.Server
 }
 
 // Init implements service.Init

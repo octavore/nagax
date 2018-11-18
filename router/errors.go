@@ -20,10 +20,10 @@ var (
 // Error wraps an api.Error return object
 type Error struct {
 	err      api.Error
-	source   string
-	silent   bool
-	redirect bool
-	request  *http.Request
+	source   string        // for logging purposes, generally the request URL
+	silent   bool          // true if the router should not return a message, only a code
+	redirect bool          // true if the router should redirect after this error
+	request  *http.Request // keeps track of the original request context
 }
 
 func (e *Error) Error() string {
@@ -42,10 +42,12 @@ func (e *Error) Error() string {
 	return errStr
 }
 
+// GetRequest returns the request which this error was initialized with.
 func (e *Error) GetRequest() *http.Request {
 	return e.request
 }
 
+// GetCode returns the status code associated with this error.
 func (e *Error) GetCode() int32 {
 	return e.err.GetCode()
 }
@@ -114,7 +116,9 @@ func NewRedirectingError(req *http.Request, code int32, e error) error {
 	}, 1)
 }
 
-// HandleError is the default error handler
+// HandleError is the default error handler. It doesn't directly satisfy the
+// HandleError interface as it also returns the final status code after handling
+// the error.
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) int {
 	switch err {
 	case ErrNotFound:
@@ -163,6 +167,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	}
 }
 
+// Error wraps the given api.Errors and returns a JSON-ified api.ErrorResponse object.
 func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Error) error {
 	for _, err := range errors {
 		if err.Code == nil || err.GetCode() >= 500 || status >= 500 {
