@@ -1,9 +1,6 @@
 package oauth
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/octavore/naga/service"
 	"golang.org/x/oauth2"
 
@@ -11,12 +8,6 @@ import (
 	"github.com/octavore/nagax/router"
 	"github.com/octavore/nagax/users"
 	"github.com/octavore/nagax/users/session"
-)
-
-const (
-	defaultLoginURL              = "/login"
-	defaultOAuthCallbackPath     = "/oauth/callback"
-	defaultPostOAuthRedirectPath = "/"
 )
 
 // UserStore is an interface for managing users by oauth id
@@ -35,37 +26,23 @@ type Module struct {
 	Sessions *session.Module // todo: make this an interface
 	Logger   *logger.Module
 
-	postOAuthRedirectPath   string
-	oauthCallbackPath       string
-	loginURL                string
-	userStore               UserStore
-	setOAuthState           func(req *http.Request) string
-	oauthConfig             *oauth2.Config
-	oauthOptions            []oauth2.AuthCodeOption
-	getCallbackRedirectPath func(userToken string, state string) *url.URL
+	oauthConfigs []*Provider
 }
 
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
-		m.postOAuthRedirectPath = defaultPostOAuthRedirectPath
-		m.oauthCallbackPath = defaultOAuthCallbackPath
-		m.loginURL = defaultLoginURL
 		return nil
 	}
 
 	c.Start = func() {
-		m.Router.GET(m.loginURL, m.handleOAuthStart)
-		m.Router.GET(m.oauthCallbackPath, m.handleOAuthCallback)
-		if m.userStore == nil {
-			panic("oauth.UserStore is required")
+		for _, p := range m.oauthConfigs {
+			m.register(p)
 		}
 	}
 }
 
-func (m *Module) Configure(opts ...option) {
-	for _, opt := range opts {
-		opt(m)
-	}
+func (m *Module) AddProvider(p *Provider) {
+	m.oauthConfigs = append(m.oauthConfigs, p)
 }
 
 func getOrCreateUser(store UserStore, accessToken *oauth2.Token) (userToken string, err error) {
