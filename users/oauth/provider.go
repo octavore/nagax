@@ -14,9 +14,9 @@ import (
 // Provider allows configuration of multiple oauth providers
 type Provider struct {
 	// required
-	Base      string
-	Config    *oauth2.Config
-	UserStore UserStore
+	Base            string
+	Config          *oauth2.Config
+	GetOrCreateUser func(*oauth2.Config, *http.Request, *oauth2.Token, string) (id string, err error)
 
 	// optional
 	PostOAuthRedirectPath string
@@ -45,12 +45,6 @@ func (p *Provider) doCallback(req *http.Request) (string, *url.URL, error) {
 		return "", nil, errors.Wrap(err)
 	}
 
-	// convert access token to user
-	userToken, err := getOrCreateUser(p.UserStore, accessToken)
-	if err != nil {
-		return "", nil, errors.Wrap(err)
-	}
-
 	// get the URL to redirect to
 	redirectURL := &url.URL{Path: p.PostOAuthRedirectPath}
 
@@ -75,6 +69,12 @@ func (p *Provider) doCallback(req *http.Request) (string, *url.URL, error) {
 	}
 
 	p.logger.Infof("redirecting after oauth: %s", redirectURL.String())
+
+	// convert access token to user
+	userToken, err := p.GetOrCreateUser(p.Config, req, accessToken, state)
+	if err != nil {
+		return "", nil, errors.Wrap(err)
+	}
 
 	return userToken, redirectURL, nil
 }
