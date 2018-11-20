@@ -3,98 +3,69 @@ package oauth
 import (
 	"encoding/base64"
 	"net/http"
-	"net/url"
 
-	"github.com/octavore/nagax/logger"
+	"golang.org/x/oauth2"
+
 	"github.com/octavore/nagax/router"
 	"github.com/octavore/nagax/util/errors"
-	"golang.org/x/oauth2"
 )
+
+// RedirectCallbackFn is the type of the callback after successfully handling the oauth callback
+// token exchange.
+type RedirectCallbackFn = func(*http.Request, http.ResponseWriter, *oauth2.Token, string) error
 
 // Provider allows configuration of multiple oauth providers
 type Provider struct {
 	// required
-	Base            string
-	Config          *oauth2.Config
-	GetOrCreateUser func(*oauth2.Config, *http.Request, *oauth2.Token, string) (id string, err error)
+	Base         string
+	Config       *oauth2.Config
+	PostCallback RedirectCallbackFn
 
 	// optional
-	PostOAuthRedirectPath string
-	Options               []oauth2.AuthCodeOption
-	SetOAuthState         func(req *http.Request) string
-
-	logger *logger.Module
+	Options       []oauth2.AuthCodeOption
+	SetOAuthState func(*http.Request, router.Params) (string, error)
 }
 
-func (p *Provider) handleOAuthStart(rw http.ResponseWriter, req *http.Request, _ router.Params) error {
-	// TODO: add some kind of verifier thing
-	state := ""
+func (m *Module) register(p *Provider) {
+	m.Router.GET(p.Base+"/login", p.HandleOAuthStart)
+	m.Router.GET(p.Base+"/callback", p.handleCallback)
+}
+
+// HandleOAuthStart is the handler for redirecting to the oauth provider.
+func (p *Provider) HandleOAuthStart(rw http.ResponseWriter, req *http.Request, par router.Params) error {
+	var state string
 	if p.SetOAuthState != nil {
-		state += base64.StdEncoding.EncodeToString([]byte(p.SetOAuthState(req)))
+		rawState, err := p.SetOAuthState(req, par)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+		state = base64.StdEncoding.EncodeToString([]byte(rawState))
 	}
 	url := p.Config.AuthCodeURL(state, p.Options...)
 	http.Redirect(rw, req, url, http.StatusTemporaryRedirect)
 	return nil
 }
 
-func (p *Provider) doCallback(req *http.Request) (string, *url.URL, error) {
+// doCallback parses the oauth callback and state if valid, and then calls PostCallback
+func (p *Provider) handleCallback(rw http.ResponseWriter, req *http.Request, _ router.Params) error {
 	// oauth handshake
 	code := req.FormValue("code")
 	accessToken, err := p.Config.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		return "", nil, errors.Wrap(err)
+		return errors.Wrap(err)
 	}
-
-	// get the URL to redirect to
-	redirectURL := &url.URL{Path: p.PostOAuthRedirectPath}
-
-	// try to read the state from the query parameters
-	state := ""
+	var state string
 	encState := req.FormValue("state")
 	if encState != "" {
 		stateByte, err := base64.StdEncoding.DecodeString(encState)
 		if err != nil {
-			p.logger.Error("error decoding state: ", err)
-		} else {
-			query := redirectURL.Query()
-			state = string(stateByte)
-			query.Set("state", state)
-			redirectURL.RawQuery = query.Encode()
+			return errors.New("error decoding state: %s", err)
 		}
+		state = string(stateByte)
 	}
-
-	if redirectURL.Host == "" {
-		redirectURL.Scheme = req.URL.Scheme
-		redirectURL.Host = req.URL.Host
-	}
-
-	p.logger.Infof("redirecting after oauth: %s", redirectURL.String())
-
-	// convert access token to user
-	userToken, err := p.GetOrCreateUser(p.Config, req, accessToken, state)
+	err = p.PostCallback(req, rw, accessToken, state)
 	if err != nil {
-		return "", nil, errors.Wrap(err)
+		return errors.Wrap(err)
 	}
-
-	return userToken, redirectURL, nil
-}
-
-func (m *Module) register(p *Provider) {
-	if p.PostOAuthRedirectPath == "" {
-		p.PostOAuthRedirectPath = "/"
-	}
-
-	m.Router.GET(p.Base+"/login", p.handleOAuthStart)
-	m.Router.GET(p.Base+"/callback", func(rw http.ResponseWriter, req *http.Request, _ router.Params) error {
-		userToken, redirectURL, err := p.doCallback(req)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-		err = m.Sessions.CreateSession(userToken, rw)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-		http.Redirect(rw, req, redirectURL.String(), http.StatusTemporaryRedirect)
-		return nil
-	})
+	return nil
 }
