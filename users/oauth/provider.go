@@ -1,6 +1,7 @@
 package oauth
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 
@@ -24,6 +25,7 @@ type Provider struct {
 	// optional
 	Options       []oauth2.AuthCodeOption
 	SetOAuthState func(*http.Request, router.Params) (string, error)
+	NewClient     func(context.Context, *oauth2.Token) *http.Client
 }
 
 func (m *Module) register(p *Provider) {
@@ -68,4 +70,13 @@ func (p *Provider) handleCallback(rw http.ResponseWriter, req *http.Request, _ r
 		return errors.Wrap(err)
 	}
 	return nil
+}
+
+// Client returns a new http client for authenticated requests. Provider
+// can be configured with NewClient to override the default oauth2.Config.Client.
+func (p *Provider) Client(ctx context.Context, t *oauth2.Token) *http.Client {
+	if p.NewClient != nil {
+		return p.NewClient(ctx, t)
+	}
+	return p.Config.Client(ctx, t)
 }
