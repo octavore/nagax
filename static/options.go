@@ -2,14 +2,12 @@ package static
 
 import (
 	"net/http"
-
-	"github.com/gobuffalo/packr"
 )
 
 type option func(m *Module)
 
 // WithBox configures the static module with a source
-func WithBox(box *packr.Box) option {
+func WithBox(box fileSource) option {
 	return func(m *Module) {
 		if m.box != nil {
 			panic("box already configured for static module")

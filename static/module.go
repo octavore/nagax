@@ -6,8 +6,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/gobuffalo/packr"
-
 	"github.com/octavore/naga/service"
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/router"
@@ -22,6 +20,10 @@ var defaultStaticDirs = []string{
 	"/static/images/",
 }
 
+type fileSource interface {
+	MustBytes(filepath string) ([]byte, error)
+}
+
 // Module static serves static files
 type Module struct {
 	Router *router.Module
@@ -31,7 +33,7 @@ type Module struct {
 	handle500      func(rw http.ResponseWriter, req *http.Request, err error)
 	staticBasePath string
 	staticDirs     []string
-	box            *packr.Box
+	box            fileSource
 }
 
 // Init this module
