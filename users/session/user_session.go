@@ -15,8 +15,7 @@ type UserSession struct {
 	SessionID string `json:"session_id"`
 }
 
-// newSessionCookie creates a new encrypted cookie for the given UserSession
-func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
+func (m *Module) newScopedSessionCookie(u *UserSession, domain string) (*http.Cookie, error) {
 	b, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
@@ -38,9 +37,14 @@ func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
 		HttpOnly: true,
 		Path:     "/",
 		MaxAge:   int(m.SessionValidityDuration.Seconds()),
-		Domain:   m.CookieDomain,
+		Domain:   domain,
 		Secure:   m.SecureCookie,
 	}, nil
+}
+
+// newSessionCookie creates a new encrypted cookie for the given UserSession
+func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
+	return m.newScopedSessionCookie(u, m.CookieDomain)
 }
 
 // getSessionFromRequest reads the current session from the request,
