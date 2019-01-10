@@ -73,7 +73,7 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 		return nil, nil
 	}
 	if m.RevocationStore.IsRevoked(session.SessionID) {
-		return nil, errors.New("invalid session")
+		return nil, nil
 	}
 
 	return session, nil
