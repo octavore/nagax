@@ -29,3 +29,10 @@ func WithLoginPath(path string) option {
 		m.loginPath = path
 	}
 }
+
+// WithoutLoginPath disables the login handler
+func WithoutLoginPath() option {
+	return func(m *Module) {
+		m.loginPath = ""
+	}
+}

@@ -48,7 +48,9 @@ func (m *Module) Init(c *service.Config) {
 		if m.userStore == nil {
 			panic("databaseauth: UserStore not configured")
 		}
-		m.Router.POST(m.loginPath, m.handleLogin)
+		if m.loginPath != "" {
+			m.Router.POST(m.loginPath, m.handleLogin)
+		}
 	}
 }
 
