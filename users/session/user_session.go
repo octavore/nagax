@@ -32,7 +32,7 @@ func (m *Module) newScopedSessionCookie(u *UserSession, domain string) (*http.Co
 	}
 
 	return &http.Cookie{
-		Name:     CookieName,
+		Name:     m.CookieName,
 		Value:    msg,
 		HttpOnly: true,
 		Path:     "/",
@@ -52,7 +52,7 @@ func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
 // No error if there was no cookie, or the cookie was valid.
 // If there is an invalid cookie, an error is returned.
 func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) {
-	cookie, err := req.Cookie(CookieName)
+	cookie, err := req.Cookie(m.CookieName)
 	if err == http.ErrNoCookie {
 		return nil, nil
 	} else if err != nil {

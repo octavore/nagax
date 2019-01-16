@@ -15,7 +15,6 @@ import (
 
 // todo: make these configurable
 const (
-	CookieName        = "session"
 	defaultKeyFile    = "session.key"
 	keyAlgorithm      = jose.RSA_OAEP
 	contentEncryption = jose.A128GCM
@@ -56,6 +55,7 @@ type Module struct {
 
 	SecureCookie            bool
 	CookieDomain            string
+	CookieName              string
 	KeyFile                 string
 	SessionValidityDuration time.Duration
 
@@ -67,6 +67,7 @@ type Module struct {
 // Init implements module.Init
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
+		m.CookieName = "session"
 		m.RevocationStore = NewInMemoryRevocationStore(defaultRevocationFlush)
 		return nil
 	}

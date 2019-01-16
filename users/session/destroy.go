@@ -17,7 +17,7 @@ func (m *Module) DestroySession(rw http.ResponseWriter, req *http.Request) {
 
 	m.RevocationStore.Revoke(session.SessionID, m.revocationTrackDuration)
 	http.SetCookie(rw, &http.Cookie{
-		Name:     CookieName,
+		Name:     m.CookieName,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Expires:  time.Now().Add(-time.Hour),
