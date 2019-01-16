@@ -3,6 +3,7 @@ package session
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/octavore/nagax/util/errors"
 
@@ -16,6 +17,10 @@ type UserSession struct {
 }
 
 func (m *Module) newScopedSessionCookie(u *UserSession, domain string) (*http.Cookie, error) {
+	if !strings.HasPrefix(domain, m.CookieDomain) {
+		return nil, errors.New("sessions: scoped cookie must have %s as a suffix", m.CookieDomain)
+	}
+
 	b, err := json.Marshal(u)
 	if err != nil {
 		return nil, err
