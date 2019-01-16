@@ -10,7 +10,7 @@ import (
 func (m *Module) CreateSession(userToken string, rw http.ResponseWriter) error {
 	cookie, err := m.newSessionCookie(&UserSession{
 		ID:        userToken,
-		SessionID: fmt.Sprintf("%s-%s", userToken, time.Now().String()),
+		SessionID: fmt.Sprintf("%s-%d", userToken, time.Now().UnixNano()),
 	})
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (m *Module) CreateSession(userToken string, rw http.ResponseWriter) error {
 func (m *Module) CreateScopedSession(userToken, domain string, rw http.ResponseWriter) error {
 	cookie, err := m.newScopedSessionCookie(&UserSession{
 		ID:        userToken,
-		SessionID: fmt.Sprintf("%s-%s", userToken, time.Now().String()),
+		SessionID: fmt.Sprintf("%s-%d", userToken, time.Now().UnixNano()),
 	}, domain)
 	if err != nil {
 		return err
