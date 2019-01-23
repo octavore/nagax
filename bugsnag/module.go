@@ -26,9 +26,10 @@ type Module struct {
 	Logger *logger.Module
 	Config *config.Module
 
-	config         Config
-	bugsnagEnabled bool
-	originalErrorf func(format string, args ...interface{})
+	ProjectPackages []string
+	config          Config
+	bugsnagEnabled  bool
+	originalErrorf  func(format string, args ...interface{})
 }
 
 var _ service.Module = &Module{}
@@ -47,13 +48,11 @@ func (m *Module) Init(c *service.Config) {
 			m.Logger.Info("bugsnag enabled: ", AppVersion)
 			// note: this forces the app to restart
 			bugsnagGo.Configure(bugsnagGo.Configuration{
-				ReleaseStage: c.Env().String(),
-				ProjectPackages: []string{
-					"github.com/octavore/*",
-				},
-				APIKey:     m.config.Bugsnag.APIKey,
-				Logger:     Printfer(m.Logger.Infof), // may be redundant with our own logging
-				AppVersion: AppVersion,
+				ReleaseStage:    c.Env().String(),
+				ProjectPackages: append(m.ProjectPackages, "github.com/octavore/*"),
+				APIKey:          m.config.Bugsnag.APIKey,
+				Logger:          Printfer(m.Logger.Infof), // may be redundant with our own logging
+				AppVersion:      AppVersion,
 			})
 			m.bugsnagEnabled = true
 		}
