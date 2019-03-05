@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -68,10 +69,16 @@ func (m *Module) Init(c *service.Config) {
 	}
 
 	c.Stop = func() {
-		err := m.server.Close()
-		if err != nil {
-			m.Logger.Error(errors.Wrap(err))
-		}
+		m.Shutdown(context.Background())
+	}
+}
+
+// Shutdown the server
+func (m *Module) Shutdown(ctx context.Context) {
+	m.Logger.Infof("shutting down %s...", m.server.Addr)
+	err := m.server.Shutdown(ctx)
+	if err != nil {
+		m.Logger.Error(errors.Wrap(err))
 	}
 }
 
