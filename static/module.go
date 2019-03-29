@@ -33,6 +33,7 @@ type Module struct {
 	handle500      func(rw http.ResponseWriter, req *http.Request, err error)
 	staticBasePath string
 	staticDirs     []string
+	excluded       []string
 	box            fileSource
 }
 
@@ -70,6 +71,12 @@ func (m *Module) DefaultHandle500(rw http.ResponseWriter, req *http.Request, err
 }
 
 func (m *Module) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	for _, exclusion := range m.excluded {
+		if strings.HasPrefix(req.URL.Path, exclusion) {
+			m.handle404(rw, req)
+			return
+		}
+	}
 	isStaticAsset := false
 	for _, dir := range m.staticDirs {
 		isStaticAsset = isStaticAsset || strings.HasPrefix(req.URL.Path, dir)

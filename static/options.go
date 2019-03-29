@@ -47,3 +47,10 @@ func WithHandle500(fn func(rw http.ResponseWriter, req *http.Request, err error)
 		m.handle500 = fn
 	}
 }
+
+// WithExcludedPrefixes allows certain paths to be excluded from serving static assets.
+func WithExcludedPrefixes(prefixes ...string) option {
+	return func(m *Module) {
+		m.excluded = prefixes
+	}
+}
