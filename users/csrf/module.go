@@ -60,3 +60,10 @@ func (m *Module) Init(c *service.Config) {
 		}
 	}
 }
+
+// Configure this module with given options
+func (m *Module) Configure(opts ...option) {
+	for _, opt := range opts {
+		opt(m)
+	}
+}
