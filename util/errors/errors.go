@@ -17,6 +17,9 @@ func Wrap(e error) error {
 	if e == nil {
 		return nil
 	}
+	if _, ok := e.(*errors.Error); ok {
+		return e
+	}
 	return errors.Wrap(e, 1)
 }
 
@@ -24,6 +27,9 @@ func Wrap(e error) error {
 func WrapS(e error, skip int) error {
 	if e == nil {
 		return nil
+	}
+	if _, ok := e.(*errors.Error); ok {
+		return e
 	}
 	return errors.Wrap(e, skip+1)
 }
