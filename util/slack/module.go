@@ -37,39 +37,40 @@ type Module struct {
 }
 
 type slackClient interface {
-	PostMessage(channel, text string, params slack.PostMessageParameters) (string, string, error)
+	PostMessage(channel string, params ...slack.MsgOption) (string, string, error)
 }
 
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
-		m.client = &dummyClient{logger: m.Logger}
 		return m.Config.ReadConfig(&m.config)
 	}
 
 	c.Start = func() {
 		if m.config.SlackConfig.APIToken != "" {
 			m.client = slack.New(m.config.SlackConfig.APIToken)
+		} else {
+			m.client = &dummyClient{logger: m.Logger}
+			m.LogMessages = true
 		}
 	}
 }
 
-type PostMessageParameters = slack.PostMessageParameters
+type MsgOption = slack.MsgOption
 
 // Post a message to the default channel
-func (m *Module) Post(txt string, params *PostMessageParameters) {
-	m.PostC(m.config.SlackConfig.Channel, txt, params)
+func (m *Module) Post(txt string, params ...MsgOption) {
+	m.PostC(m.config.SlackConfig.Channel, txt, params...)
 }
 
 // PostC posts a message to the given channel
-func (m *Module) PostC(channel, txt string, params *PostMessageParameters) {
-	var p PostMessageParameters
-	if params != nil {
-		p = *params
-	}
+func (m *Module) PostC(channel, txt string, params ...MsgOption) {
 	if m.LogMessages {
 		m.Logger.Infof("[%s] %s", m.config.SlackConfig.Channel, txt)
 	}
-	_, _, err := m.client.PostMessage(channel, txt, p)
+
+	_, _, err := m.client.PostMessage(channel,
+		slack.MsgOptionText(txt, false),
+		slack.MsgOptionCompose(params...))
 	if err != nil {
 		m.Logger.Error(errors.Wrap(err))
 	}
@@ -79,7 +80,6 @@ type dummyClient struct {
 	logger *logger.Module
 }
 
-func (d *dummyClient) PostMessage(channel, text string, params slack.PostMessageParameters) (string, string, error) {
-	d.logger.Infof("[%s] %s (not sent)", channel, text)
+func (d *dummyClient) PostMessage(channel string, params ...slack.MsgOption) (string, string, error) {
 	return "", "", nil
 }
