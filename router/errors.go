@@ -114,7 +114,29 @@ func NewRedirectingError(req *http.Request, code int32, e error) error {
 	}, 1)
 }
 
-// HandleError is the default error handler
+func (m *Module) GetErrorCode(err error) int {
+	// check for err constants
+	switch err {
+	case ErrNotFound:
+		return http.StatusNotFound
+	case ErrNotAuthorized:
+		return http.StatusUnauthorized
+	case ErrForbidden:
+		return http.StatusForbidden
+	case ErrInternal:
+		return http.StatusInternalServerError
+	}
+	// check err type
+	switch e := err.(type) {
+	case *errors.Error:
+		return m.GetErrorCode(e.Err)
+	case *Error:
+		return int(e.err.GetCode())
+	}
+	return http.StatusInternalServerError
+}
+
+// HandleError is the default API error handler
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) int {
 	switch err {
 	case ErrNotFound:
