@@ -34,6 +34,7 @@ type Module struct {
 			APIToken string `json:"api_token"`
 		} `json:"slack_internal"`
 	}
+	defaultChannel string
 }
 
 type slackClient interface {
@@ -42,7 +43,15 @@ type slackClient interface {
 
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
-		return m.Config.ReadConfig(&m.config)
+		err := m.Config.ReadConfig(&m.config)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+		m.defaultChannel = m.config.SlackConfig.Channel
+		if m.defaultChannel == "" {
+			m.defaultChannel = "#activity"
+		}
+		return nil
 	}
 
 	c.Start = func() {
@@ -59,13 +68,13 @@ type MsgOption = slack.MsgOption
 
 // Post a message to the default channel
 func (m *Module) Post(txt string, params ...MsgOption) {
-	m.PostC(m.config.SlackConfig.Channel, txt, params...)
+	m.PostC(m.defaultChannel, txt, params...)
 }
 
 // PostC posts a message to the given channel
 func (m *Module) PostC(channel, txt string, params ...MsgOption) {
 	if m.LogMessages {
-		m.Logger.Infof("[%s] %s", m.config.SlackConfig.Channel, txt)
+		m.Logger.Infof("[%s] %s", m.defaultChannel, txt)
 	}
 
 	_, _, err := m.client.PostMessage(channel,
