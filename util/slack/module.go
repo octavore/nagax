@@ -14,6 +14,8 @@
 package slack
 
 import (
+	"fmt"
+
 	"github.com/nlopes/slack"
 	"github.com/octavore/naga/service"
 
@@ -35,6 +37,7 @@ type Module struct {
 		} `json:"slack_internal"`
 	}
 	defaultChannel string
+	env            service.Environment
 }
 
 type slackClient interface {
@@ -51,6 +54,7 @@ func (m *Module) Init(c *service.Config) {
 		if m.defaultChannel == "" {
 			m.defaultChannel = "#activity"
 		}
+		m.env = c.Env()
 		return nil
 	}
 
@@ -64,15 +68,16 @@ func (m *Module) Init(c *service.Config) {
 	}
 }
 
-type MsgOption = slack.MsgOption
-
 // Post a message to the default channel
-func (m *Module) Post(txt string, params ...MsgOption) {
+func (m *Module) Post(txt string, params ...slack.MsgOption) {
 	m.PostC(m.defaultChannel, txt, params...)
 }
 
 // PostC posts a message to the given channel
-func (m *Module) PostC(channel, txt string, params ...MsgOption) {
+func (m *Module) PostC(channel, txt string, params ...slack.MsgOption) {
+	if !m.env.IsProduction() {
+		txt = fmt.Sprintf("(%s) %s", m.env.String())
+	}
 	if m.LogMessages {
 		m.Logger.Infof("[%s] %s", m.defaultChannel, txt)
 	}
