@@ -8,7 +8,7 @@ import (
 
 // CreateSession update the response with a session cookie
 func (m *Module) CreateSession(userToken string, rw http.ResponseWriter) error {
-	cookie, err := m.newSessionCookie(&UserSession{
+	cookie, err := m.NewSessionCookie(&UserSession{
 		ID:        userToken,
 		SessionID: fmt.Sprintf("%s-%d", userToken, time.Now().UnixNano()),
 	})

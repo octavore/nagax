@@ -47,8 +47,8 @@ func (m *Module) newScopedSessionCookie(u *UserSession, domain string) (*http.Co
 	}, nil
 }
 
-// newSessionCookie creates a new encrypted cookie for the given UserSession
-func (m *Module) newSessionCookie(u *UserSession) (*http.Cookie, error) {
+// NewSessionCookie creates a new encrypted cookie for the given UserSession
+func (m *Module) NewSessionCookie(u *UserSession) (*http.Cookie, error) {
 	return m.newScopedSessionCookie(u, m.CookieDomain)
 }
 

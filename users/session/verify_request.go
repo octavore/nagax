@@ -24,7 +24,7 @@ func (m *Module) VerifyAndExtend(rw http.ResponseWriter, req *http.Request) (str
 		return "", nil
 	}
 
-	cookie, err := m.newSessionCookie(session)
+	cookie, err := m.NewSessionCookie(session)
 	if err == nil {
 		rw.Header().Add("Set-Cookie", cookie.String())
 	}
