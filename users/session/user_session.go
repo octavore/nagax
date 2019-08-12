@@ -74,7 +74,10 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 	b, err := obj.Decrypt(m.decryptionKey)
 	session := &UserSession{}
 	if err = json.Unmarshal(b, session); err != nil {
-		m.Logger.Error(errors.Wrap(err))
+		isInvalidSession := strings.Contains(err.Error(), "unexpected end of JSON input")
+		if !isInvalidSession {
+			m.Logger.Error(errors.Wrap(err))
+		}
 		return nil, nil
 	}
 	if m.RevocationStore.IsRevoked(session.SessionID) {
