@@ -76,7 +76,7 @@ func (m *Module) Post(txt string, params ...slack.MsgOption) {
 // PostC posts a message to the given channel
 func (m *Module) PostC(channel, txt string, params ...slack.MsgOption) {
 	if !m.env.IsProduction() {
-		txt = fmt.Sprintf("(%s) %s", m.env.String())
+		txt = fmt.Sprintf("(%s) %s", m.env.String(), txt)
 	}
 	if m.LogMessages {
 		m.Logger.Infof("[%s] %s", m.defaultChannel, txt)
