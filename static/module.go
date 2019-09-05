@@ -1,6 +1,7 @@
 package static
 
 import (
+	"html/template"
 	"mime"
 	"net/http"
 	"path"
@@ -35,6 +36,8 @@ type Module struct {
 	staticDirs     []string
 	excluded       []string
 	box            fileSource
+	pageContextFn  func(req *http.Request) interface{}
+	cachedIndex    *template.Template
 }
 
 // Init this module
@@ -88,6 +91,13 @@ func (m *Module) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	m.ServeAsset(rw, req, p, true)
 }
 
+func (m *Module) getPageContext(req *http.Request) interface{} {
+	if m.pageContextFn != nil {
+		return m.pageContextFn(req)
+	}
+	return nil
+}
+
 // ServeAsset serves a filepath from the packr box. handle404 and handle500
 // should not recurse.
 func (m *Module) ServeAsset(rw http.ResponseWriter, req *http.Request, filepath string, customErrHandler bool) {
@@ -110,5 +120,12 @@ func (m *Module) ServeAsset(rw http.ResponseWriter, req *http.Request, filepath 
 		return
 	}
 	rw.Header().Add("Content-Type", mime.TypeByExtension(ext))
-	rw.Write(b)
+	if filepath == "index.html" {
+		if m.cachedIndex == nil {
+			m.cachedIndex = template.Must(template.New(filepath).Parse(string(b)))
+		}
+		m.cachedIndex.Execute(rw, m.getPageContext(req))
+	} else {
+		rw.Write(b)
+	}
 }
