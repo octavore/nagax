@@ -104,28 +104,71 @@ func (m *Module) ServeAsset(rw http.ResponseWriter, req *http.Request, filepath 
 	ext := path.Ext(filepath)
 	b, err := m.box.MustBytes(filepath)
 	if err != nil {
-		if !customErrHandler {
-			m.Logger.Errorf("%s: %s", req.URL, err)
-			rw.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		switch {
-		case strings.Contains(err.Error(), "not found") ||
-			strings.Contains(err.Error(), "no such file or directory"):
-			m.handle404(rw, req)
-		default:
-			m.handle500(rw, req, err)
-		}
+		m.handleError(req, rw, err, customErrHandler)
 		return
 	}
 	rw.Header().Add("Content-Type", mime.TypeByExtension(ext))
 	if filepath == "index.html" {
 		if m.cachedIndex == nil {
-			m.cachedIndex = template.Must(template.New(filepath).Parse(string(b)))
+			tpl, err := template.New(filepath).Parse(string(b))
+			if err != nil {
+				m.handleError(req, rw, err, customErrHandler)
+				return
+			}
+			m.cachedIndex = tpl
 		}
 		m.cachedIndex.Execute(rw, m.getPageContext(req))
 	} else {
 		rw.Write(b)
+	}
+}
+
+// ServeAssetWithContext serves a file like ServeAsset, except is process it as a template file
+// and injects the page context.
+// todo: cache templates.
+func (m *Module) ServeAssetWithContext(rw http.ResponseWriter, req *http.Request, filepath string, customErrHandler bool) {
+	ext := path.Ext(filepath)
+	b, err := m.box.MustBytes(filepath)
+	if err != nil {
+		m.handleError(req, rw, err, customErrHandler)
+		return
+	}
+	rw.Header().Add("Content-Type", mime.TypeByExtension(ext))
+
+	tpl, err := template.New(filepath).Parse(string(b))
+	if err != nil {
+		m.handleError(req, rw, err, customErrHandler)
+		return
+	}
+	tpl.Execute(rw, m.getPageContext(req))
+}
+
+func (m *Module) handleError(req *http.Request, rw http.ResponseWriter, err error, customErrHandler bool) {
+	if !customErrHandler {
+		m.Logger.Errorf("%s: %s", req.URL, err)
+		rw.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	switch {
+	case strings.Contains(err.Error(), "not found") ||
+		strings.Contains(err.Error(), "no such file or directory"):
+		m.handle404(rw, req)
+	default:
+		m.handle500(rw, req, err)
+	}
+	return
+	if !customErrHandler {
+		m.Logger.Errorf("%s: %s", req.URL, err)
+		rw.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	switch {
+	case strings.Contains(err.Error(), "not found") ||
+		strings.Contains(err.Error(), "no such file or directory"):
+		m.handle404(rw, req)
+	default:
+		m.handle500(rw, req, err)
 	}
 }
