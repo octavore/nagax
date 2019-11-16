@@ -6,8 +6,8 @@ func BadRequest(req *http.Request, message string) error {
 	return NewRequestError(req, http.StatusNotFound, message)
 }
 
-func NotAuthenticated(req *http.Request) error {
-	return NewRequestError(req, http.StatusNotFound, "not authenticated")
+func NotFound(req *http.Request, message string) error {
+	return NewRequestError(req, http.StatusNotFound, message)
 }
 
 func Forbidden(req *http.Request) error {
