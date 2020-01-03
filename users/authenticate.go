@@ -3,10 +3,10 @@ package users
 import "net/http"
 
 func (m *Module) Authenticate(rw http.ResponseWriter, req *http.Request) (handled bool, userToken *string, err error) {
-	return m.authenticate(m.Authenticators, rw, req)
+	return m.AuthenticateWithList(m.Authenticators, rw, req)
 }
 
-func (m *Module) authenticate(authenticators []Authenticator, rw http.ResponseWriter, req *http.Request) (handled bool, userToken *string, err error) {
+func (m *Module) AuthenticateWithList(authenticators []Authenticator, rw http.ResponseWriter, req *http.Request) (handled bool, userToken *string, err error) {
 	for _, auth := range authenticators {
 		handled, userToken, err := auth.Authenticate(rw, req)
 		// always print error if present

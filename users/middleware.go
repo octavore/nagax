@@ -19,7 +19,7 @@ func (m *Module) MustWithAuth(next router.Handle) router.Handle {
 
 func (m *Module) WithAuthList(authenticators []Authenticator, next router.Handle) router.Handle {
 	return func(rw http.ResponseWriter, req *http.Request, par router.Params) error {
-		_, userToken, err := m.authenticate(authenticators, rw, req)
+		_, userToken, err := m.AuthenticateWithList(authenticators, rw, req)
 		if err != nil {
 			return err
 		}
@@ -33,7 +33,7 @@ func (m *Module) WithAuthList(authenticators []Authenticator, next router.Handle
 
 func (m *Module) MustWithAuthList(authenticators []Authenticator, next router.Handle) router.Handle {
 	return func(rw http.ResponseWriter, req *http.Request, par router.Params) error {
-		handled, userToken, err := m.authenticate(authenticators, rw, req)
+		handled, userToken, err := m.AuthenticateWithList(authenticators, rw, req)
 		if err != nil {
 			return err
 		}
