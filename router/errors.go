@@ -50,6 +50,10 @@ func (e *Error) GetCode() int32 {
 	return e.err.GetCode()
 }
 
+func (e *Error) Source() api.Error {
+	return e.err
+}
+
 // newError creates an Error with the appropriate enum for the code.
 func newAPIError(code int32, detail string) api.Error {
 	codeEnum := api.ErrorCode(code)
