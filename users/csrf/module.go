@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/octavore/naga/service"
-	jose "github.com/square/go-jose"
+	jose "gopkg.in/square/go-jose.v1"
 
 	"github.com/octavore/nagax/keystore"
 	"github.com/octavore/nagax/logger"

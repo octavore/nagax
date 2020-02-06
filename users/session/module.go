@@ -7,7 +7,7 @@ import (
 	"github.com/octavore/nagax/logger"
 
 	"github.com/octavore/naga/service"
-	"github.com/square/go-jose"
+	"gopkg.in/square/go-jose.v1"
 
 	"github.com/octavore/nagax/keystore"
 	"github.com/octavore/nagax/users"

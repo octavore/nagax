@@ -7,7 +7,7 @@ import (
 
 	"github.com/octavore/nagax/util/errors"
 
-	jose "github.com/square/go-jose"
+	jose "gopkg.in/square/go-jose.v1"
 )
 
 // UserSession data to be marshalled
