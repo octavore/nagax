@@ -26,11 +26,19 @@ type Provider struct {
 	Options       []oauth2.AuthCodeOption
 	SetOAuthState func(*http.Request, router.Params) (string, error)
 	NewClient     func(context.Context, *oauth2.Token) *http.Client
+	handleError   func(http.ResponseWriter, *http.Request, error) error
 }
 
 func (m *Module) register(p *Provider) {
 	m.Router.GET(p.Base+"/login", p.HandleOAuthStart)
 	m.Router.GET(p.Base+"/callback", p.handleCallback)
+	if m.HandleError != nil {
+		p.handleError = m.HandleError
+	} else {
+		p.handleError = func(_ http.ResponseWriter, _ *http.Request, err error) error {
+			return err
+		}
+	}
 }
 
 // HandleOAuthStart is the handler for redirecting to the oauth provider.
@@ -39,7 +47,7 @@ func (p *Provider) HandleOAuthStart(rw http.ResponseWriter, req *http.Request, p
 	if p.SetOAuthState != nil {
 		rawState, err := p.SetOAuthState(req, par)
 		if err != nil {
-			return errors.Wrap(err)
+			return p.handleError(rw, req, errors.Wrap(err))
 		}
 		state = base64.StdEncoding.EncodeToString([]byte(rawState))
 	}
@@ -54,20 +62,20 @@ func (p *Provider) handleCallback(rw http.ResponseWriter, req *http.Request, _ r
 	code := req.FormValue("code")
 	accessToken, err := p.Config.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		return errors.Wrap(err)
+		return p.handleError(rw, req, errors.Wrap(err))
 	}
 	var state string
 	encState := req.FormValue("state")
 	if encState != "" {
 		stateByte, err := base64.StdEncoding.DecodeString(encState)
 		if err != nil {
-			return errors.New("error decoding state: %s", err)
+			return p.handleError(rw, req, errors.New("error decoding state: %s", err))
 		}
 		state = string(stateByte)
 	}
 	err = p.PostCallback(req, rw, accessToken, state)
 	if err != nil {
-		return errors.Wrap(err)
+		return p.handleError(rw, req, errors.Wrap(err))
 	}
 	return nil
 }

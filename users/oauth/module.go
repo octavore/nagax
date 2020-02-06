@@ -1,6 +1,8 @@
 package oauth
 
 import (
+	"net/http"
+
 	"github.com/octavore/naga/service"
 
 	"github.com/octavore/nagax/router"
@@ -12,6 +14,7 @@ var _ service.Module = &Module{}
 type Module struct {
 	Router       *router.Module
 	oauthConfigs []*Provider
+	HandleError  func(http.ResponseWriter, *http.Request, error) error
 }
 
 // Init this module.
