@@ -20,6 +20,9 @@ func ProtoOK(rw http.ResponseWriter, pb proto.Message) error {
 
 // Proto renders a response with given status code and JSON-serialized proto
 func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
+	if pb == nil {
+		return EmptyJSON(rw, status)
+	}
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	return jpb.Marshal(rw, pb)
@@ -27,22 +30,24 @@ func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
 
 // JSON renders a response with given status and JSON serialized data
 func JSON(rw http.ResponseWriter, status int, v interface{}) error {
+	if v == nil {
+		return EmptyJSON(rw, status)
+	}
 	if pb, ok := v.(proto.Message); ok {
 		return Proto(rw, status, pb)
 	}
-
+	rw.Header().Add("Content-Type", "application/json")
+	rw.WriteHeader(status)
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
-	rw.Header().Add("Content-Type", "application/json")
-	rw.WriteHeader(status)
 	_, err = rw.Write(b)
 	return err
 }
 
-// EmptyJSON renders a 200 response with JSON body `{}`
-func (m *Module) EmptyJSON(rw http.ResponseWriter, status int) error {
+// EmptyJSON renders a response with the given status and JSON body `{}`
+func EmptyJSON(rw http.ResponseWriter, status int) error {
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	_, err := rw.Write([]byte(`{}`))
