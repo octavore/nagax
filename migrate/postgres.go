@@ -69,3 +69,7 @@ func (p *postgresBackend) Drop() error {
 func (p *postgresBackend) Migrate() error {
 	return p.Datasource.migrate(p.MigrationSource)
 }
+
+func (p *postgresBackend) UnappliedMigrations() ([]string, error) {
+	return p.Datasource.unappliedMigrations(p.MigrationSource)
+}

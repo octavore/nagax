@@ -12,6 +12,7 @@ type backend interface {
 	Reset() error
 	Drop() error
 	Migrate() error
+	UnappliedMigrations() ([]string, error)
 }
 
 // GetBackend selects the datasource identified by dbname in the config file and

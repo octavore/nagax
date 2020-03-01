@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/octavore/naga/service"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 	backoff "gopkg.in/cenkalti/backoff.v2"
 
 	"github.com/octavore/nagax/config"
@@ -70,6 +70,23 @@ func (m *Module) ConnectDefault() (*sql.DB, error) {
 // Connect is a helper function to connect to this datasource
 func (d *Datasource) Connect() (*sql.DB, error) {
 	return sql.Open(d.Driver, d.DSN)
+}
+
+func (d *Datasource) unappliedMigrations(m migrate.MigrationSource) ([]string, error) {
+	db, err := d.Connect()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	plans, _, err := migrate.PlanMigration(db, d.Driver, m, migrate.Up, 0)
+	if err != nil {
+		return nil, err
+	}
+	migrations := []string{}
+	for _, plan := range plans {
+		migrations = append(migrations, plan.Id)
+	}
+	return migrations, nil
 }
 
 // Migrate runs migrations in m

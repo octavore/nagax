@@ -59,3 +59,7 @@ func (m *mysqlBackend) Drop() error {
 func (m *mysqlBackend) Migrate() error {
 	return m.Datasource.migrate(m.MigrationSource)
 }
+
+func (m *mysqlBackend) UnappliedMigrations() ([]string, error) {
+	return m.Datasource.unappliedMigrations(m.MigrationSource)
+}
