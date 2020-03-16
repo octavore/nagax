@@ -82,7 +82,7 @@ func (m *Module) Init(c *service.Config) {
 		var err error
 		m.encrypter, m.decryptionKey, err = loadKeys(m.KeyFile, m.KeyStore)
 		if err != nil {
-			panic(err)
+			c.Fatal(err)
 		}
 		m.revocationTrackDuration = m.SessionValidityDuration
 		s, ok := m.RevocationStore.(*InMemoryRevocationStore)

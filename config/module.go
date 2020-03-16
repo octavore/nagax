@@ -59,7 +59,7 @@ func (m *Module) Init(c *service.Config) {
 		}
 		err := m.LoadConfig(m.TestConfigPath)
 		if err != nil {
-			panic(err)
+			c.Fatal(err)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package databaseauth
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -46,7 +47,7 @@ func (m *Module) Init(c *service.Config) {
 	}
 	c.Start = func() {
 		if m.userStore == nil {
-			panic("databaseauth: UserStore not configured")
+			c.Fatal(fmt.Errorf("databaseauth: UserStore not configured"))
 		}
 		if m.loginPath != "" {
 			m.Router.POST(m.loginPath, m.handleLogin)

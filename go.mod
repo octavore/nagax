@@ -15,7 +15,7 @@ require (
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/lib/pq v1.3.0
 	github.com/nlopes/slack v0.6.0
-	github.com/octavore/naga v0.0.0-20190313054113-bacab51fe9fb
+	github.com/octavore/naga v1.0.0
 	github.com/rubenv/sql-migrate v0.0.0-20200119084958-8794cecc920c
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72
