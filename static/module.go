@@ -157,18 +157,4 @@ func (m *Module) handleError(req *http.Request, rw http.ResponseWriter, err erro
 	default:
 		m.handle500(rw, req, err)
 	}
-	return
-	if !customErrHandler {
-		m.Logger.Errorf("%s: %s", req.URL, err)
-		rw.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	switch {
-	case strings.Contains(err.Error(), "not found") ||
-		strings.Contains(err.Error(), "no such file or directory"):
-		m.handle404(rw, req)
-	default:
-		m.handle500(rw, req, err)
-	}
 }
