@@ -33,7 +33,7 @@ type Module struct {
 
 	csrfValidityDuration time.Duration
 	keyStore             KeyStore
-	keyFile              string
+	KeyFile              string
 	decryptionKey        interface{}
 	encrypter            jose.Encrypter
 }
@@ -42,14 +42,14 @@ type Module struct {
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.keyStore = &keystore.KeyStore{}
-		m.keyFile = defaultKeyFile
+		m.KeyFile = defaultKeyFile
 		m.csrfValidityDuration = defaultCSRFValidity
 		return nil
 	}
 
 	c.Start = func() {
 		var err error
-		privateKey, publicKey, err := loadKeys(m.keyFile, m.keyStore)
+		privateKey, publicKey, err := loadKeys(m.KeyFile, m.keyStore)
 		if err != nil {
 			c.Fatal(err)
 		}
