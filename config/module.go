@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"reflect"
 
 	"github.com/octavore/naga/service"
+	"github.com/octavore/nagax/util/errors"
 )
 
 // ConfigEnv specifies the env variable which contains the path to a config file.
@@ -102,4 +104,24 @@ func errIfProduction(c *service.Config, err error) error {
 	}
 	service.BootPrintln(err)
 	return nil
+}
+
+func (m *Module) ResourcePath(resource string) (string, error) {
+	configDir, err := filepath.Abs(filepath.Dir(m.ConfigPath))
+	if err != nil {
+		return "", errors.Wrap(err)
+	}
+	return filepath.Join(configDir, resource), nil
+}
+
+func (m *Module) Resource(resource string) ([]byte, error) {
+	p, err := filepath.Abs(filepath.Dir(m.ConfigPath))
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	data, err := ioutil.ReadFile(p)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return data, nil
 }
