@@ -195,7 +195,7 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	switch {
 	case routerErr.silent:
 		rw.WriteHeader(status)
-	case routerErr.redirect || !m.isAPIRoute(req):
+	case routerErr.redirect || !m.IsAPIRoute(req):
 		m.ErrorPage(rw, req, status, unwrappedErr)
 	default:
 		Proto(rw, status, &api.ErrorResponse{Errors: []*api.Error{&routerErr.err}})

@@ -38,7 +38,9 @@ type Module struct {
 	ErrorHandler HandleError
 	Middleware   *middleware.MiddlewareServer
 
-	ErrorPage   func(rw http.ResponseWriter, req *http.Request, status int, err error)
+	ErrorPage  func(rw http.ResponseWriter, req *http.Request, status int, err error)
+	IsAPIRoute func(req *http.Request) bool
+
 	APIPrefixes []string // paths with this prefix get API errors
 	config      Config
 	server      *http.Server
@@ -49,6 +51,7 @@ func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.HTTPRouter = httprouter.New()
 		m.APIPrefixes = []string{"/"} // for backward compatibility
+		m.IsAPIRoute = m.isAPIRoute
 		m.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
 			_ = m.HandleError(rw, req, err)
 		}
