@@ -8,6 +8,7 @@ import (
 	"github.com/go-errors/errors"
 
 	"github.com/octavore/nagax/proto/nagax/router/api"
+	"github.com/octavore/nagax/router/httperror"
 )
 
 var (
@@ -153,22 +154,31 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	// 2. convert known errors to router error
 	switch unwrappedErr {
 	case ErrNotFound:
-		unwrappedErr = NewRequestError(req, http.StatusNotFound, "not found: "+req.URL.String())
+		unwrappedErr = httperror.NotFound("Not found: " + req.URL.String())
 	case ErrNotAuthorized:
-		unwrappedErr = NewRequestError(req, http.StatusUnauthorized, "not authenticated")
+		unwrappedErr = httperror.NotAuthorized("Not authenticated")
 	case ErrForbidden:
-		unwrappedErr = NewRequestError(req, http.StatusForbidden, "forbidden")
+		unwrappedErr = httperror.Forbidden("Forbidden")
 	case ErrInternal:
-		unwrappedErr = NewRequestError(req, http.StatusInternalServerError, "internal server error")
+		unwrappedErr = httperror.InternalError("Internal server error")
 	}
 
 	// 3. convert errors to router.Error and handle unknown errors
-	routerErr, ok := unwrappedErr.(*Error)
-	if !ok /* handling an unknown error */ {
+	var routerErr *Error
+	if h, ok := unwrappedErr.(*httperror.HTTPError); ok {
 		routerErr = &Error{
 			source:  req.URL.String(),
 			request: req,
-			err:     newAPIError(500, "internal server error"),
+			err:     newAPIError(h.Code, h.Detail),
+		}
+	} else {
+		routerErr, ok = unwrappedErr.(*Error)
+		if !ok /* handling an unknown error */ {
+			routerErr = &Error{
+				source:  req.URL.String(),
+				request: req,
+				err:     newAPIError(500, "internal server error"),
+			}
 		}
 	}
 

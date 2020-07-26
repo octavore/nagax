@@ -38,10 +38,19 @@ func Forbidden(format string, args ...interface{}) *HTTPError {
 	}
 }
 
-// BadRequest is a helper to return a 404 error
+// NotFound is a helper to return a 404 error
 func NotFound(format string, args ...interface{}) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusNotFound,
 	}
 }
+
+// Internal is a helper to return a 404 error
+func InternalError(format string, args ...interface{}) *HTTPError {
+	return &HTTPError{
+		Detail: fmt.Sprintf(format, args...),
+		Code:   http.StatusInternalServerError,
+	}
+}
+
