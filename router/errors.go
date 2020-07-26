@@ -118,7 +118,19 @@ func NewRedirectingError(req *http.Request, code int32, e error) error {
 	}, 1)
 }
 
-func (m *Module) GetErrorCode(err error) int {
+type GetCoder interface {
+	GetCode() int
+}
+
+func GetErrorCode(err error) int {
+	// check err type
+	switch e := err.(type) {
+	case *errors.Error:
+		err = e.Err
+	case GetCoder:
+		return e.GetCode()
+	}
+
 	// check for err constants
 	switch err {
 	case ErrNotFound:
@@ -129,13 +141,6 @@ func (m *Module) GetErrorCode(err error) int {
 		return http.StatusForbidden
 	case ErrInternal:
 		return http.StatusInternalServerError
-	}
-	// check err type
-	switch e := err.(type) {
-	case *errors.Error:
-		return m.GetErrorCode(e.Err)
-	case *Error:
-		return int(e.err.GetCode())
 	}
 	return http.StatusInternalServerError
 }
