@@ -46,8 +46,8 @@ func (e *Error) GetRequest() *http.Request {
 	return e.request
 }
 
-func (e *Error) GetCode() int32 {
-	return e.err.GetCode()
+func (e *Error) GetCode() int {
+	return int(e.err.GetCode())
 }
 
 func (e *Error) Source() api.Error {
@@ -108,13 +108,13 @@ func NewQuietError(req *http.Request, code int32, e error) error {
 
 // NewRedirectingError creates an Error with source set to the request url
 // and the redirect flag set to true, which will
-func NewRedirectingError(req *http.Request, code int32, e error) error {
+func NewRedirectingError(req *http.Request, e error) error {
 	return errors.Wrap(&Error{
 		silent:   false,
 		redirect: true,
 		source:   req.URL.String(),
 		request:  req,
-		err:      newAPIError(code, errString(e)),
+		err:      newAPIError(http.StatusFound, errString(e)),
 	}, 1)
 }
 
@@ -122,12 +122,11 @@ type GetCoder interface {
 	GetCode() int
 }
 
+var _ GetCoder = &Error{}
+
 func GetErrorCode(err error) int {
-	// check err type
-	switch e := err.(type) {
-	case *errors.Error:
-		err = e.Err
-	case GetCoder:
+	err, _ = unwrapGoError(err)
+	if e, ok := err.(GetCoder); ok {
 		return e.GetCode()
 	}
 
@@ -145,56 +144,57 @@ func GetErrorCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-// HandleError is the default API error handler
+// HandleError is the base error handler for the router
 func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err error) int {
-	switch err {
+	// 1. unwrap error
+	originalErr := err
+	unwrappedErr, _ := unwrapGoError(err)
+
+	// 2. convert known errors to router error
+	switch unwrappedErr {
 	case ErrNotFound:
-		err = NewRequestError(req, http.StatusNotFound, "not found: "+req.URL.String())
+		unwrappedErr = NewRequestError(req, http.StatusNotFound, "not found: "+req.URL.String())
 	case ErrNotAuthorized:
-		err = NewRequestError(req, http.StatusUnauthorized, "not authenticated")
+		unwrappedErr = NewRequestError(req, http.StatusUnauthorized, "not authenticated")
 	case ErrForbidden:
-		err = NewRequestError(req, http.StatusForbidden, "forbidden")
+		unwrappedErr = NewRequestError(req, http.StatusForbidden, "forbidden")
 	case ErrInternal:
-		err = NewRequestError(req, http.StatusInternalServerError, "internal server error")
+		unwrappedErr = NewRequestError(req, http.StatusInternalServerError, "internal server error")
 	}
 
-	switch e := err.(type) {
-	// handle wrapped error created by errors.Wrap
-	case *errors.Error:
-		// log (warn) the stack trace and then recurse on the original err, which
-		// is either a known *Error or unknown error
-		m.Logger.Warning(errString(err))
-		return m.HandleError(rw, req, e.Err)
-
-	case *Error:
-		status := int(e.err.GetCode())
-		if status >= 500 {
-			m.Logger.Error(e) // log the original error (with request)
-		} else {
-			m.Logger.Warning(err)
-		}
-		if e.silent {
-			rw.WriteHeader(status)
-		} else if e.redirect {
-			m.ErrorPage(rw, req, status)
-		} else {
-			Proto(rw, int(e.err.GetCode()), &api.ErrorResponse{Errors: []*api.Error{&e.err}})
-		}
-		return status
-
-	default:
-		// log error with request
-		m.Logger.Error(&Error{
+	// 3. convert errors to router.Error and handle unknown errors
+	routerErr, ok := unwrappedErr.(*Error)
+	if !ok /* handling an unknown error */ {
+		routerErr = &Error{
+			source:  req.URL.String(),
 			request: req,
-			err:     newAPIError(500, errString(e)),
-		})
-		ae := newAPIError(http.StatusInternalServerError, "internal server error")
-		Proto(rw, http.StatusInternalServerError, &api.ErrorResponse{Errors: []*api.Error{&ae}})
-		return http.StatusInternalServerError
+			err:     newAPIError(500, "internal server error"),
+		}
 	}
+
+	// 4. log errors
+	status := routerErr.GetCode()
+	if status >= 500 {
+		routerErr.err = newAPIError(int32(status), "internal server error")
+		m.Logger.Error(originalErr) // log the original error (with request)
+	} else {
+		m.Logger.Warning(originalErr)
+	}
+
+	// 5.handle errors
+	switch {
+	case routerErr.silent:
+		rw.WriteHeader(status)
+	case routerErr.redirect || !m.isAPIRoute(req):
+		m.ErrorPage(rw, req, status, unwrappedErr)
+	default:
+		Proto(rw, status, &api.ErrorResponse{Errors: []*api.Error{&routerErr.err}})
+	}
+	return status
 }
 
-func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Error) error {
+// Error writes an an API error to rw
+func (m *Module) Error(rw http.ResponseWriter, status int, errors ...*api.Error) error {
 	for _, err := range errors {
 		if err.Code == nil || err.GetCode() >= 500 || status >= 500 {
 			m.Logger.Error(err)
@@ -202,17 +202,18 @@ func (m *Module) Error(rw http.ResponseWriter, status int32, errors ...*api.Erro
 			m.Logger.Warning(err)
 		}
 	}
-	return Proto(rw, int(status), &api.ErrorResponse{
+	return Proto(rw, status, &api.ErrorResponse{
 		Errors: errors,
 	})
 }
 
 // errString prints out an error, with its location if appropriate
 func errString(err error) string {
-	e, ok := err.(*errors.Error)
+	err, ok := unwrapGoError(err)
 	if !ok {
 		return err.Error()
 	}
+	e := err.(*errors.Error)
 	s := e.StackFrames()[0]
 	f := path.Base(s.File)
 	prefix := fmt.Sprintf("[%s/%s:%d]", s.Package, f, s.LineNumber)
@@ -220,4 +221,13 @@ func errString(err error) string {
 		return prefix
 	}
 	return fmt.Sprint(prefix, " ", e.Error())
+}
+
+func unwrapGoError(err error) (error, bool) {
+	wrappedErr, isWrapped := err.(*errors.Error)
+	if isWrapped {
+		unwrapped, _ := unwrapGoError(wrappedErr.Err)
+		return unwrapped, true
+	}
+	return err, false
 }

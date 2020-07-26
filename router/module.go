@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/octavore/naga/service"
@@ -37,19 +38,21 @@ type Module struct {
 	ErrorHandler HandleError
 	Middleware   *middleware.MiddlewareServer
 
-	ErrorPage func(rw http.ResponseWriter, req *http.Request, status int)
-	config    Config
-	server    *http.Server
+	ErrorPage   func(rw http.ResponseWriter, req *http.Request, status int, err error)
+	APIPrefixes []string // paths with this prefix get API errors
+	config      Config
+	server      *http.Server
 }
 
 // Init implements service.Init
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		m.HTTPRouter = httprouter.New()
+		m.APIPrefixes = []string{"/"} // for backward compatibility
 		m.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
 			_ = m.HandleError(rw, req, err)
 		}
-		m.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int) {
+		m.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int, _ error) {
 			http.Error(rw, fmt.Sprint(status), status)
 		}
 
@@ -149,4 +152,13 @@ func (m *Module) wrap(h Handle) httprouter.Handle {
 			m.ErrorHandler(rw, req, err)
 		}
 	}
+}
+
+func (m *Module) isAPIRoute(req *http.Request) bool {
+	for _, prefix := range m.APIPrefixes {
+		if strings.HasPrefix(req.URL.Path, prefix) {
+			return true
+		}
+	}
+	return false
 }
