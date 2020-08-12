@@ -44,6 +44,7 @@ func (m *Module) newScopedSessionCookie(u *UserSession, domain string) (*http.Co
 		MaxAge:   int(m.SessionValidityDuration.Seconds()),
 		Domain:   domain,
 		Secure:   m.SecureCookie,
+		SameSite: http.SameSiteStrictMode,
 	}, nil
 }
 
