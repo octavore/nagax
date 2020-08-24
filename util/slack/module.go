@@ -16,8 +16,8 @@ package slack
 import (
 	"fmt"
 
-	"github.com/nlopes/slack"
 	"github.com/octavore/naga/service"
+	"github.com/slack-go/slack"
 
 	"github.com/octavore/nagax/config"
 	"github.com/octavore/nagax/logger"
