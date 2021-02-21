@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/octavore/naga/service"
+	"github.com/octavore/nagax/util/errors"
 	"gopkg.in/cenkalti/backoff.v2"
 )
 
@@ -22,10 +24,57 @@ func (m *Module) registerCommands(c *service.Config) {
 				return
 			}
 			err = backoff.RetryNotify(b.Migrate, m.backoff, func(err error, duration time.Duration) {
-				m.Logger.Warningf("can't connect to mysql: %s, will retry in %s", err, duration)
+				m.Logger.Warningf("can't connect to db: %s, will retry in %s", err, duration)
 			})
 			if err != nil {
 				m.Logger.Error("migrate:", err)
+			}
+		},
+	})
+
+	c.AddCommand(&service.Command{
+		Keyword:    "db:status <db>",
+		ShortUsage: "show migration status for <db>",
+		Run: func(ctx *service.CommandContext) {
+			if len(ctx.Args) != 1 {
+				m.printHelp(ctx)
+			}
+			b, err := m.GetBackend(ctx.Args[0])
+			if err != nil {
+				m.Logger.Error("migrate:", err)
+				return
+			}
+
+			allMigrations, err := b.migrations().FindMigrations()
+			if err != nil {
+				m.Logger.Error("migrate:", err)
+				return
+			}
+			var unapplied []string
+			err = backoff.RetryNotify(func() error {
+				unapplied, err = b.UnappliedMigrations()
+				if err != nil {
+					return errors.Wrap(err)
+				}
+				return nil
+			}, m.backoff, func(err error, duration time.Duration) {
+				m.Logger.Warningf("can't connect to db: %s, will retry in %s", err, duration)
+			})
+			if err != nil {
+				m.Logger.Error("migrate:", err)
+			}
+
+			var unappliedSet map[string]bool
+			for _, m := range unapplied {
+				unappliedSet[m] = true
+			}
+
+			for _, m := range allMigrations {
+				status := color.YellowString("pending")
+				if !unappliedSet[m.Id] {
+					status = color.GreenString("done")
+				}
+				fmt.Printf("%-18s%s\n", status, m.Id)
 			}
 		},
 	})

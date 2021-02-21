@@ -1,6 +1,8 @@
 package migrate
 
 import (
+	"io/fs"
+	"net/http"
 	"path/filepath"
 
 	migrate "github.com/rubenv/sql-migrate"
@@ -18,6 +20,14 @@ func (m *Module) SetMigrationSource(asset assetFunc, assetDir assetDirFunc, dir 
 		Asset:    asset,
 		AssetDir: assetDir,
 		Dir:      dir,
+	}
+}
+
+// SetMigrationSource sets the migration source, for compatibility with
+// embedded file assets.
+func (m *Module) SetMigrationFS(f fs.FS) {
+	m.migrationSource = &migrate.HttpFileSystemMigrationSource{
+		FileSystem: http.FS(f),
 	}
 }
 
