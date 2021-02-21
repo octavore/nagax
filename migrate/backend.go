@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	migrate "github.com/rubenv/sql-migrate"
 )
 
 type backend interface {
@@ -13,6 +15,7 @@ type backend interface {
 	Drop() error
 	Migrate() error
 	UnappliedMigrations() ([]string, error)
+	migrations() migrate.MigrationSource
 }
 
 // GetBackend selects the datasource identified by dbname in the config file and

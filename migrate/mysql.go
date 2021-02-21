@@ -63,3 +63,7 @@ func (m *mysqlBackend) Migrate() error {
 func (m *mysqlBackend) UnappliedMigrations() ([]string, error) {
 	return m.Datasource.unappliedMigrations(m.MigrationSource)
 }
+
+func (m *mysqlBackend) migrations() migrate.MigrationSource {
+	return m.MigrationSource
+}
