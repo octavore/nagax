@@ -64,7 +64,7 @@ func (m *Module) registerCommands(c *service.Config) {
 				m.Logger.Error("migrate:", err)
 			}
 
-			var unappliedSet map[string]bool
+			unappliedSet := map[string]bool{}
 			for _, m := range unapplied {
 				unappliedSet[m] = true
 			}
