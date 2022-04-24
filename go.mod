@@ -14,7 +14,7 @@ require (
 	github.com/golang/protobuf v1.3.3
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/lib/pq v1.3.0
+	github.com/lib/pq v1.10.5
 	github.com/octavore/naga v1.0.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20200119084958-8794cecc920c
