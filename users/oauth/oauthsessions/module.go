@@ -1,7 +1,6 @@
 package oauthsessions
 
 import (
-	"encoding/base64"
 	"net/http"
 	"net/url"
 
@@ -36,20 +35,12 @@ func (m *Module) Init(c *service.Config) {
 	}
 }
 
-func (m *Module) redirectCallback(req *http.Request, rw http.ResponseWriter, token *oauth2.Token, _ string) error {
+func (m *Module) redirectCallback(req *http.Request, rw http.ResponseWriter, token *oauth2.Token, state string) error {
 	// get the URL to redirect to
 	redirectURL := &url.URL{Path: m.RedirectPath}
 
-	// try to read the state from the query parameters
-	state := ""
-	encState := req.FormValue("state")
-	if encState != "" {
-		stateByte, err := base64.StdEncoding.DecodeString(encState)
-		if err != nil {
-			return errors.New("error decoding state: %s", err)
-		}
+	if state != "" {
 		query := redirectURL.Query()
-		state = string(stateByte)
 		query.Set("state", state)
 		redirectURL.RawQuery = query.Encode()
 	}
