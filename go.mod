@@ -7,7 +7,6 @@ require (
 	github.com/bugsnag/bugsnag-go v1.5.3
 	github.com/fatih/color v1.7.0
 	github.com/go-errors/errors v1.0.1
-	github.com/golang/protobuf v1.3.3
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/lib/pq v1.10.5
 	github.com/octavore/naga v1.0.0
@@ -16,6 +15,7 @@ require (
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/crypto v0.0.0-20200204104054-c9f3fb736b72
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	google.golang.org/protobuf v1.30.0
 	gopkg.in/cenkalti/backoff.v2 v2.2.1
 	gopkg.in/square/go-jose.v1 v1.1.2
 )
@@ -25,6 +25,7 @@ require (
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
