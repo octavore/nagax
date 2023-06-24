@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
-var jpb = &jsonpb.Marshaler{
-	EnumsAsInts: false,
-	Indent:      "  ",
+var jpb = &protojson.MarshalOptions{
+	UseEnumNumbers: false,
+	Indent:         "  ",
 }
 
 // ProtoOK renders a 200 response with JSON-serialized proto
@@ -23,9 +23,14 @@ func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
 	if pb == nil {
 		return EmptyJSON(rw, status)
 	}
+	data, err := jpb.Marshal(pb)
+	if err != nil {
+		return err
+	}
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
-	return jpb.Marshal(rw, pb)
+	_, err = rw.Write(data)
+	return err
 }
 
 // JSON renders a response with given status and JSON serialized data
