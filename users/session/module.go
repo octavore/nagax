@@ -6,8 +6,8 @@ import (
 
 	"github.com/octavore/nagax/logger"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/octavore/naga/service"
-	"gopkg.in/square/go-jose.v1"
 
 	"github.com/octavore/nagax/keystore"
 	"github.com/octavore/nagax/users"
@@ -93,29 +93,19 @@ func (m *Module) Init(c *service.Config) {
 }
 
 // load keys from the keystore
-func loadKeys(keyFile string, keyStore KeyStore) (jose.Encrypter, interface{}, error) {
-	privateKey, _, err := keyStore.LoadPrivateKey(keyFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	decryptionKey, err := jose.LoadPrivateKey(privateKey)
+func loadKeys(keyFile string, keyStore KeyStore) (jose.Encrypter, *rsa.PrivateKey, error) {
+	_, privateKey, err := keyStore.LoadPrivateKey(keyFile)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pub, err := keyStore.LoadPublicKey(keyFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	publicKey, err := jose.LoadPublicKey(pub)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	encrypter, err := jose.NewEncrypter(keyAlgorithm, contentEncryption, publicKey)
+	encrypter, err := jose.NewEncrypter(contentEncryption, jose.Recipient{
+		Algorithm: keyAlgorithm,
+		Key:       &privateKey.PublicKey,
+	}, nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return encrypter, decryptionKey, err
+	return encrypter, privateKey, err
 }
