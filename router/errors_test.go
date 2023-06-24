@@ -19,16 +19,15 @@ func TestNewRequestError_400(t *testing.T) {
 	defer env.stop()
 	rr := httptest.NewRecorder()
 	env.module.HandleError(rr, req, err)
-	assert.Equal(t, len(env.logger.Warnings), 1)
-	assert.Equal(t, env.logger.Warnings[0], expectedStr)
-	assert.Equal(t, rr.Code, http.StatusBadRequest)
-	assert.JSONEq(t, rr.Body.String(), `{
+	assert.ElementsMatch(t, []string{expectedStr}, env.logger.Warnings)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.JSONEq(t, `{
 		"errors": [{
 			"code": 400,
 			"title": "bad_request",
 			"detail":"request error"
 		}]
-	}`)
+	}`, rr.Body.String())
 }
 
 func TestNewQuietWrap_400(t *testing.T) {

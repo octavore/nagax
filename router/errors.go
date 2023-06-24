@@ -52,7 +52,11 @@ func (e *Error) GetCode() int {
 }
 
 func (e *Error) Source() api.Error {
-	return e.err
+	return api.Error{
+		Code:   e.err.Code,
+		Title:  e.err.Title,
+		Detail: e.err.Detail,
+	}
 }
 
 // newError creates an Error with the appropriate enum for the code.
