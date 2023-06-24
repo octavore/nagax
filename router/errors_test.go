@@ -77,7 +77,7 @@ func TestNewQuietError_400(t *testing.T) {
 func TestNewRedirectingError_400(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test-redirected", nil)
 	originalErr := fmt.Errorf("hidden error")
-	err := NewRedirectingError(req, http.StatusBadRequest, originalErr)
+	err := NewRedirectingError(req, originalErr)
 	expectedStr := `/test-redirected: code:400 title:bad_request detail:"hidden error"  (redirect)`
 	assert.EqualError(t, err, expectedStr)
 
@@ -86,7 +86,7 @@ func TestNewRedirectingError_400(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	errorPageCalls := 0
-	env.module.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int) {
+	env.module.ErrorPage = func(rw http.ResponseWriter, req *http.Request, status int, err error) {
 		assert.Equal(t, status, http.StatusBadRequest)
 		http.Redirect(rw, req, "", http.StatusTemporaryRedirect)
 		errorPageCalls++

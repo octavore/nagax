@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-errors/errors"
 
-	"github.com/octavore/nagax/proto/nagax/router/api"
+	"github.com/octavore/nagax/proto/router/api"
 	"github.com/octavore/nagax/router/httperror"
 )
 
