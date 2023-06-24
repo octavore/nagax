@@ -36,7 +36,7 @@ func (m *Module) Init(c *service.Config) {
 	}
 }
 
-func (m *Module) redirectCallback(req *http.Request, rw http.ResponseWriter, token *oauth2.Token) error {
+func (m *Module) redirectCallback(req *http.Request, rw http.ResponseWriter, token *oauth2.Token, _ string) error {
 	// get the URL to redirect to
 	redirectURL := &url.URL{Path: m.RedirectPath}
 
