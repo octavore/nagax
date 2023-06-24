@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	jose "gopkg.in/square/go-jose.v1"
+	"github.com/go-jose/go-jose/v3"
 
 	"github.com/octavore/nagax/util/errors"
 	"github.com/octavore/nagax/util/token"
@@ -25,17 +25,17 @@ func (m *Module) New(state string) (string, error) {
 		ExpireAfter: time.Now().Add(m.csrfValidityDuration),
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err)
 	}
 
 	obj, err := m.encrypter.Encrypt(b)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err)
 	}
 
 	msg, err := obj.CompactSerialize()
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err)
 	}
 
 	return msg, nil
@@ -45,12 +45,15 @@ func (m *Module) New(state string) (string, error) {
 func (m *Module) Decode(token string) (*csrfPayload, error) {
 	obj, err := jose.ParseEncrypted(token)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err)
 	}
 	b, err := obj.Decrypt(m.decryptionKey)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 	csrfPayload := &csrfPayload{}
 	if err = json.Unmarshal(b, csrfPayload); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err)
 	}
 	if time.Now().After(csrfPayload.ExpireAfter) {
 		return nil, errors.New("csrf token expired")
@@ -65,6 +68,9 @@ func (m *Module) Verify(state, token string) (bool, error) {
 		return false, errors.Wrap(err)
 	}
 	b, err := obj.Decrypt(m.decryptionKey)
+	if err != nil {
+		return false, errors.Wrap(err)
+	}
 	csrfPayload := &csrfPayload{}
 	if err = json.Unmarshal(b, csrfPayload); err != nil {
 		return false, errors.Wrap(err)
