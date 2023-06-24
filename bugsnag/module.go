@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	bugsnagGo "github.com/bugsnag/bugsnag-go"
+	bugsnagGo "github.com/bugsnag/bugsnag-go/v2"
 	goerrors "github.com/go-errors/errors"
 	"github.com/octavore/naga/service"
 

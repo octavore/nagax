@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
-	github.com/bugsnag/bugsnag-go v2.2.0+incompatible
+	github.com/bugsnag/bugsnag-go/v2 v2.2.0
 	github.com/fatih/color v1.15.0
 	github.com/go-errors/errors v1.4.2
 	github.com/go-jose/go-jose/v3 v3.0.0
