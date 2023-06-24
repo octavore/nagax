@@ -2,12 +2,13 @@ package session
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/octavore/nagax/util/errors"
 
-	jose "gopkg.in/square/go-jose.v1"
+	"github.com/go-jose/go-jose/v3"
 )
 
 // UserSession data to be marshalled
@@ -53,6 +54,21 @@ func (m *Module) NewSessionCookie(u *UserSession) (*http.Cookie, error) {
 	return m.newScopedSessionCookie(u, m.CookieDomain)
 }
 
+func (m *Module) decodeCookieValue(value string) (*UserSession, error) {
+	obj, err := jose.ParseEncrypted(value)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid cookie value: %w.", err)
+	}
+
+	b, err := obj.Decrypt(m.decryptionKey)
+	session := &UserSession{}
+	err = json.Unmarshal(b, session)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid cookie value: %w.", err)
+	}
+	return session, nil
+}
+
 // getSessionFromRequest reads the current session from the request,
 // and if it is valid, returns the corresponding UserSession.
 // No error if there was no cookie, or the cookie was valid.
@@ -61,29 +77,18 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 	cookie, err := req.Cookie(m.CookieName)
 	if err == http.ErrNoCookie {
 		return nil, nil
-	} else if err != nil {
-		m.Logger.Error(errors.Wrap(err))
-		return nil, nil
 	}
-
-	obj, err := jose.ParseEncrypted(cookie.Value)
 	if err != nil {
 		m.Logger.Error(errors.Wrap(err))
 		return nil, nil
 	}
 
-	b, err := obj.Decrypt(m.decryptionKey)
-	session := &UserSession{}
-	if err = json.Unmarshal(b, session); err != nil {
-		isInvalidSession := strings.Contains(err.Error(), "unexpected end of JSON input")
-		if !isInvalidSession {
-			m.Logger.Error(errors.Wrap(err))
-		}
-		return nil, nil
+	session, err := m.decodeCookieValue(cookie.Value)
+	if err != nil {
+		return nil, errors.Wrap(err)
 	}
 	if m.RevocationStore.IsRevoked(session.SessionID) {
 		return nil, nil
 	}
-
 	return session, nil
 }

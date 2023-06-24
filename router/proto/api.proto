@@ -2,8 +2,12 @@ syntax = "proto2";
 
 package nagax.router.api;
 
+option go_package = "github.com/octavore/nagax/proto/router/api";
+
 enum ErrorCode {
   internal_server_error = 500;
+  moved_permanently = 301;
+  found = 302;
   bad_request = 400;
   not_authorized = 401;
   forbidden = 403;

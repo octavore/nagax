@@ -4,8 +4,8 @@ import (
 	"crypto/rsa"
 	"time"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/octavore/naga/service"
-	jose "gopkg.in/square/go-jose.v1"
 
 	"github.com/octavore/nagax/keystore"
 	"github.com/octavore/nagax/logger"
@@ -34,7 +34,7 @@ type Module struct {
 	csrfValidityDuration time.Duration
 	keyStore             KeyStore
 	KeyFile              string
-	decryptionKey        interface{}
+	decryptionKey        *rsa.PrivateKey
 	encrypter            jose.Encrypter
 }
 
@@ -49,12 +49,15 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Start = func() {
 		var err error
-		privateKey, publicKey, err := loadKeys(m.KeyFile, m.keyStore)
+		_, privateKey, err := m.keyStore.LoadPrivateKey(m.KeyFile)
 		if err != nil {
 			c.Fatal(err)
 		}
 		m.decryptionKey = privateKey
-		m.encrypter, err = jose.NewEncrypter(keyAlgorithm, contentEncryption, publicKey)
+		m.encrypter, err = jose.NewEncrypter(contentEncryption, jose.Recipient{
+			Algorithm: keyAlgorithm,
+			Key:       &privateKey.PublicKey,
+		}, nil)
 		if err != nil {
 			c.Fatal(err)
 		}
