@@ -47,7 +47,6 @@ func (b *bugsnagLogger) Errorf(format string, args ...any) {
 	b.Error(msg)
 }
 
-func (b *bugsnagLogger) ErrorCtx(ctx context.Context, format string, args ...any) {
-	msg := fmt.Sprintf(format, args...)
-	b.Error(msg)
+func (b *bugsnagLogger) ErrorCtx(ctx context.Context, args ...any) {
+	b.Error(args...)
 }

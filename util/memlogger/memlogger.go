@@ -34,8 +34,8 @@ func (m *MemoryLogger) Infof(format string, args ...any) {
 	m.Infos = append(m.Infos, fmt.Sprintf(format, args...))
 }
 
-func (m *MemoryLogger) InfoCtx(ctx context.Context, format string, args ...any) {
-	m.Infos = append(m.Infos, fmt.Sprintf(format, args...))
+func (m *MemoryLogger) InfoCtx(ctx context.Context, args ...any) {
+	m.Info(args...)
 }
 
 func (m *MemoryLogger) Warning(args ...any) {
@@ -46,8 +46,8 @@ func (m *MemoryLogger) Warningf(format string, args ...any) {
 	m.Warnings = append(m.Warnings, fmt.Sprintf(format, args...))
 }
 
-func (m *MemoryLogger) WarningCtx(ctx context.Context, format string, args ...any) {
-	m.Warnings = append(m.Warnings, fmt.Sprintf(format, args...))
+func (m *MemoryLogger) WarningCtx(ctx context.Context, args ...any) {
+	m.Warning(args...)
 }
 
 func (m *MemoryLogger) Error(args ...any) {
@@ -58,6 +58,6 @@ func (m *MemoryLogger) Errorf(format string, args ...any) {
 	m.Errors = append(m.Errors, fmt.Sprintf(format, args...))
 }
 
-func (m *MemoryLogger) ErrorCtx(ctx context.Context, format string, args ...any) {
-	m.Errors = append(m.Errors, fmt.Sprintf(format, args...))
+func (m *MemoryLogger) ErrorCtx(ctx context.Context, args ...any) {
+	m.Error(args...)
 }

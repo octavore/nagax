@@ -11,15 +11,15 @@ import (
 type Logger interface {
 	Info(args ...any)
 	Infof(format string, args ...any)
-	InfoCtx(ctx context.Context, format string, args ...any)
+	InfoCtx(ctx context.Context, args ...any)
 
 	Warning(args ...any)
 	Warningf(format string, args ...any)
-	WarningCtx(ctx context.Context, format string, args ...any)
+	WarningCtx(ctx context.Context, args ...any)
 
 	Error(args ...any)
 	Errorf(format string, args ...any)
-	ErrorCtx(ctx context.Context, format string, args ...any)
+	ErrorCtx(ctx context.Context, args ...any)
 }
 
 type DefaultLogger struct{}
@@ -32,8 +32,8 @@ func (d *DefaultLogger) Infof(format string, args ...any) {
 	log.Printf("[INFO] "+format, args...)
 }
 
-func (d *DefaultLogger) InfoCtx(ctx context.Context, format string, args ...any) {
-	log.Printf("[INFO] "+format, args...)
+func (d *DefaultLogger) InfoCtx(ctx context.Context, args ...any) {
+	d.Info(args...)
 }
 
 func (d *DefaultLogger) Warning(args ...any) {
@@ -44,8 +44,8 @@ func (d *DefaultLogger) Warningf(format string, args ...any) {
 	log.Printf("[WARN] "+format, args...)
 }
 
-func (d *DefaultLogger) WarningCtx(ctx context.Context, format string, args ...any) {
-	log.Printf("[WARN] "+format, args...)
+func (d *DefaultLogger) WarningCtx(ctx context.Context, args ...any) {
+	d.Warning(args...)
 }
 
 func (d *DefaultLogger) Error(args ...any) {
@@ -56,8 +56,8 @@ func (d *DefaultLogger) Errorf(format string, args ...any) {
 	log.Printf("[ERROR] "+format, args...)
 }
 
-func (d *DefaultLogger) ErrorCtx(ctx context.Context, format string, args ...any) {
-	log.Printf("[ERROR] "+format, args...)
+func (d *DefaultLogger) ErrorCtx(ctx context.Context, args ...any) {
+	d.Error(args...)
 }
 
 var _ service.Module = &Module{}
