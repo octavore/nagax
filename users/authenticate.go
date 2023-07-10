@@ -11,7 +11,7 @@ func (m *Module) AuthenticateWithList(authenticators []Authenticator, rw http.Re
 		handled, userToken, err := auth.Authenticate(rw, req)
 		// always print error if present
 		if err != nil {
-			m.Logger.Error(err)
+			m.Logger.ErrorCtx(req.Context(), err)
 		}
 		if !handled {
 			continue

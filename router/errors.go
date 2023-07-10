@@ -190,9 +190,9 @@ func (m *Module) HandleError(rw http.ResponseWriter, req *http.Request, err erro
 	status := routerErr.GetCode()
 	if status >= 500 {
 		routerErr.err = newAPIError(int32(status), "internal server error")
-		m.Logger.Error(originalErr) // log the original error (with request)
+		m.Logger.ErrorCtx(req.Context(), originalErr) // log the original error (with request)
 	} else {
-		m.Logger.Warning(originalErr)
+		m.Logger.WarningCtx(req.Context(), originalErr)
 	}
 
 	// 5.handle errors

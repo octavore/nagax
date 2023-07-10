@@ -79,7 +79,7 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 		return nil, nil
 	}
 	if err != nil {
-		m.Logger.Error(errors.Wrap(err))
+		m.Logger.ErrorCtx(req.Context(), errors.Wrap(err))
 		return nil, nil
 	}
 

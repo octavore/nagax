@@ -80,7 +80,7 @@ func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *ht
 		ok, err := m.CSRF.Verify(session, csrfToken)
 		if err != nil {
 			ok = false
-			m.Logger.Error(errors.Wrap(err))
+			m.Logger.ErrorCtx(req.Context(), errors.Wrap(err))
 		}
 		if !ok {
 			err := router.NewRequestError(req, http.StatusBadRequest, "invalid csrf token")

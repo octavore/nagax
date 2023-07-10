@@ -69,7 +69,7 @@ func (m *Module) DefaultHandle404(rw http.ResponseWriter, req *http.Request) {
 
 // DefaultHandle500 default 500 handler
 func (m *Module) DefaultHandle500(rw http.ResponseWriter, req *http.Request, err error) {
-	m.Logger.Errorf("%s: %s", req.URL, err)
+	m.Logger.ErrorCtx(req.Context(), err)
 	http.Error(rw, "internal server error", http.StatusInternalServerError)
 }
 
@@ -145,7 +145,7 @@ func (m *Module) ServeAssetWithContext(rw http.ResponseWriter, req *http.Request
 
 func (m *Module) handleError(req *http.Request, rw http.ResponseWriter, err error, customErrHandler bool) {
 	if !customErrHandler {
-		m.Logger.Errorf("%s: %s", req.URL, err)
+		m.Logger.ErrorCtx(req.Context(), err)
 		rw.WriteHeader(http.StatusNotFound)
 		return
 	}
