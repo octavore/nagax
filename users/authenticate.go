@@ -9,11 +9,11 @@ func (m *Module) Authenticate(rw http.ResponseWriter, req *http.Request) (handle
 func (m *Module) AuthenticateWithList(authenticators []Authenticator, rw http.ResponseWriter, req *http.Request) (handled bool, userToken *string, err error) {
 	for _, auth := range authenticators {
 		handled, userToken, err := auth.Authenticate(rw, req)
-		// always print error if present
-		if err != nil {
-			m.Logger.ErrorCtx(req.Context(), err)
-		}
 		if !handled {
+			// if not handled but we have an error, log it separately
+			if err != nil {
+				m.Logger.ErrorCtx(req.Context(), err)
+			}
 			continue
 		}
 		return true, userToken, err
