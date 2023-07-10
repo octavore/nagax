@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -8,39 +9,54 @@ import (
 )
 
 type Logger interface {
-	Info(args ...interface{})
-	Infof(format string, args ...interface{})
+	Info(args ...any)
+	Infof(format string, args ...any)
+	InfoCtx(ctx context.Context, format string, args ...any)
 
-	Warning(args ...interface{})
-	Warningf(format string, args ...interface{})
+	Warning(args ...any)
+	Warningf(format string, args ...any)
+	WarningCtx(ctx context.Context, format string, args ...any)
 
-	Error(args ...interface{})
-	Errorf(format string, args ...interface{})
+	Error(args ...any)
+	Errorf(format string, args ...any)
+	ErrorCtx(ctx context.Context, format string, args ...any)
 }
 
 type DefaultLogger struct{}
 
-func (d *DefaultLogger) Info(args ...interface{}) {
+func (d *DefaultLogger) Info(args ...any) {
 	log.Println("[INFO]", fmt.Sprint(args...))
 }
 
-func (d *DefaultLogger) Infof(format string, args ...interface{}) {
+func (d *DefaultLogger) Infof(format string, args ...any) {
 	log.Printf("[INFO] "+format, args...)
 }
 
-func (d *DefaultLogger) Warning(args ...interface{}) {
+func (d *DefaultLogger) InfoCtx(ctx context.Context, format string, args ...any) {
+	log.Printf("[INFO] "+format, args...)
+}
+
+func (d *DefaultLogger) Warning(args ...any) {
 	log.Println("[WARN]", fmt.Sprint(args...))
 }
 
-func (d *DefaultLogger) Warningf(format string, args ...interface{}) {
+func (d *DefaultLogger) Warningf(format string, args ...any) {
 	log.Printf("[WARN] "+format, args...)
 }
 
-func (d *DefaultLogger) Error(args ...interface{}) {
+func (d *DefaultLogger) WarningCtx(ctx context.Context, format string, args ...any) {
+	log.Printf("[WARN] "+format, args...)
+}
+
+func (d *DefaultLogger) Error(args ...any) {
 	log.Println("[ERROR]", fmt.Sprint(args...))
 }
 
-func (d *DefaultLogger) Errorf(format string, args ...interface{}) {
+func (d *DefaultLogger) Errorf(format string, args ...any) {
+	log.Printf("[ERROR] "+format, args...)
+}
+
+func (d *DefaultLogger) ErrorCtx(ctx context.Context, format string, args ...any) {
 	log.Printf("[ERROR] "+format, args...)
 }
 
