@@ -29,7 +29,7 @@ type Module struct {
 	ProjectPackages []string
 	config          Config
 	bugsnagEnabled  bool
-	originalErrorf  func(format string, args ...interface{})
+	originalErrorf  func(format string, args ...any)
 }
 
 var _ service.Module = &Module{}
@@ -77,7 +77,7 @@ type ErrorStackable interface {
 }
 
 // Notify bugsnag, note that m.Logger.Error calls Notify so Notify musn't call m.Logger.Error
-func (m *Module) Notify(err error, rawData ...interface{}) {
+func (m *Module) Notify(err error, rawData ...any) {
 	rawData = append(rawData, bugsnagGo.SeverityError)
 	if re, ok := err.(GetRequestable); ok && re.GetRequest() != nil {
 		rawData = append(rawData, re.GetRequest())

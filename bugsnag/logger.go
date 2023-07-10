@@ -1,6 +1,7 @@
 package bugsnag
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -12,10 +13,10 @@ import (
 
 type bugsnagLogger struct {
 	logger.Logger
-	Notify func(error, ...interface{}) // Notify is the module.Notify which wraps bugsnag.Notify with added print
+	Notify func(error, ...any) // Notify is the module.Notify which wraps bugsnag.Notify with added print
 }
 
-func (b *bugsnagLogger) Error(args ...interface{}) {
+func (b *bugsnagLogger) Error(args ...any) {
 	if len(args) == 1 {
 		if originalErr, ok := args[0].(error); ok {
 			// this handles case with only one error arugment
@@ -41,7 +42,12 @@ func (b *bugsnagLogger) Error(args ...interface{}) {
 	b.Notify(errors.New(fmt.Sprint(args...)))
 }
 
-func (b *bugsnagLogger) Errorf(format string, args ...interface{}) {
+func (b *bugsnagLogger) Errorf(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	b.Error(msg)
+}
+
+func (b *bugsnagLogger) ErrorCtx(ctx context.Context, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	b.Error(msg)
 }
