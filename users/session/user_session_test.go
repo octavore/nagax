@@ -23,8 +23,6 @@ func TestNewSessionCookie(t *testing.T) {
 	assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
 	assert.Equal(t, "/", cookie.Path)
 
-	session, err := m.decodeCookieValue(cookie.Value)
-	assert.NoError(t, err)
-
+	session := m.decodeCookieValue(cookie.Value)
 	assert.Equal(t, &UserSession{ID: "abc", SessionID: "123"}, session)
 }

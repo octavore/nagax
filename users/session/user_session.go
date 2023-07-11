@@ -2,7 +2,6 @@ package session
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -54,19 +53,21 @@ func (m *Module) NewSessionCookie(u *UserSession) (*http.Cookie, error) {
 	return m.newScopedSessionCookie(u, m.CookieDomain)
 }
 
-func (m *Module) decodeCookieValue(value string) (*UserSession, error) {
+func (m *Module) decodeCookieValue(value string) *UserSession {
 	obj, err := jose.ParseEncrypted(value)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid cookie value: %w.", err)
+		m.Logger.Infof("Invalid cookie value: %s.", err)
+		return nil
 	}
 
 	b, err := obj.Decrypt(m.decryptionKey)
 	session := &UserSession{}
 	err = json.Unmarshal(b, session)
 	if err != nil {
-		return nil, fmt.Errorf("Invalid cookie value: %w.", err)
+		m.Logger.Infof("Invalid cookie value: %s.", err)
+		return nil
 	}
-	return session, nil
+	return session
 }
 
 // getSessionFromRequest reads the current session from the request,
@@ -83,9 +84,9 @@ func (m *Module) getSessionFromRequest(req *http.Request) (*UserSession, error) 
 		return nil, nil
 	}
 
-	session, err := m.decodeCookieValue(cookie.Value)
-	if err != nil {
-		return nil, errors.Wrap(err)
+	session := m.decodeCookieValue(cookie.Value)
+	if session == nil {
+		return nil, nil
 	}
 	if m.RevocationStore.IsRevoked(session.SessionID) {
 		return nil, nil
