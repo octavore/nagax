@@ -26,3 +26,14 @@ func TestIsType(t *testing.T) {
 	assert.True(t, IsType(err, wrappedErr))
 	assert.True(t, IsType(wrappedErr, err))
 }
+
+func TestWrapNil(t *testing.T) {
+	assert.Equal(t, nil, Wrap(nil))
+}
+
+func TestDoubleWrap(t *testing.T) {
+	err := &TestError{}
+	wrappedErr := Wrap(err)
+	wrappedErr2 := Wrap(wrappedErr)
+	assert.Equal(t, wrappedErr, wrappedErr2)
+}

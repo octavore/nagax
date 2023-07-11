@@ -14,6 +14,9 @@ func New(m string, a ...interface{}) error {
 
 // Wrap an error e if it is not nil
 func Wrap(err error) error {
+	if err == nil {
+		return nil
+	}
 	var e *goerrors.Error
 	if errors.As(err, &e) {
 		return err
@@ -23,6 +26,9 @@ func Wrap(err error) error {
 
 // WrapS is like Wrap but skips 'skip' lines of trace
 func WrapS(err error, skip int) error {
+	if err == nil {
+		return nil
+	}
 	var e *goerrors.Error
 	if errors.As(err, &e) {
 		return err
