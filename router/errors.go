@@ -28,7 +28,8 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	errStr := e.err.String()
+	// note: e.err.String() is unstable
+	errStr := fmt.Sprintf("code:%d title:%s detail:%q", e.err.GetCode(), e.err.GetTitle(), e.err.GetDetail())
 	if e.source != "" {
 		errStr = e.source + ": " + errStr
 	} else if e.request != nil {
