@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/octavore/nagax/util/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -25,12 +26,12 @@ func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
 	}
 	data, err := jpb.Marshal(pb)
 	if err != nil {
-		return err
+		return errors.Wrap(err)
 	}
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	_, err = rw.Write(data)
-	return err
+	return errors.Wrap(err)
 }
 
 // JSON renders a response with given status and JSON serialized data
@@ -48,7 +49,7 @@ func JSON(rw http.ResponseWriter, status int, v interface{}) error {
 		return err
 	}
 	_, err = rw.Write(b)
-	return err
+	return errors.Wrap(err)
 }
 
 // EmptyJSON renders a response with the given status and JSON body `{}`
@@ -56,5 +57,5 @@ func EmptyJSON(rw http.ResponseWriter, status int) error {
 	rw.Header().Add("Content-Type", "application/json")
 	rw.WriteHeader(status)
 	_, err := rw.Write([]byte(`{}`))
-	return err
+	return errors.Wrap(err)
 }

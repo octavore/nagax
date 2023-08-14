@@ -152,7 +152,7 @@ func (m *Module) wrap(h Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, req *http.Request, par Params) {
 		err := h(rw, req, par)
 		if err != nil && m.ErrorHandler != nil {
-			m.ErrorHandler(rw, req, err)
+			m.ErrorHandler(rw, req, errors.Wrap(err))
 		}
 	}
 }
