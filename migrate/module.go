@@ -47,6 +47,9 @@ type Datasource struct {
 func (m *Module) Init(c *service.Config) {
 	m.registerCommands(c)
 
+	// alias sqlite dialect
+	migrate.MigrationDialects["sqlite"] = migrate.MigrationDialects["sqlite3"]
+
 	c.Setup = func() error {
 		m.env = c.Env()
 		m.backoff = &backoff.StopBackOff{}

@@ -49,6 +49,8 @@ func (m *Module) GetBackend(dbname string) (backend, error) {
 		return &postgresBackend{ds, migrations}, nil
 	case "mysql":
 		return &mysqlBackend{ds, migrations}, nil
+	case "sqlite":
+		return &sqliteBackend{ds, migrations}, nil
 	}
 	return nil, fmt.Errorf("migrate: unsupported driver %s", ds.Driver)
 }
