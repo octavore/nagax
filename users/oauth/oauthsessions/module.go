@@ -5,11 +5,12 @@ import (
 	"net/url"
 
 	"github.com/octavore/naga/service"
+	"golang.org/x/oauth2"
+
 	"github.com/octavore/nagax/users"
 	"github.com/octavore/nagax/users/oauth"
 	"github.com/octavore/nagax/users/session"
 	"github.com/octavore/nagax/util/errors"
-	"golang.org/x/oauth2"
 )
 
 type Module struct {

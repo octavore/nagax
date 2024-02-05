@@ -6,8 +6,9 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/octavore/naga/service"
-	"github.com/octavore/nagax/util/errors"
 	"gopkg.in/cenkalti/backoff.v2"
+
+	"github.com/octavore/nagax/util/errors"
 )
 
 func (m *Module) registerCommands(c *service.Config) {

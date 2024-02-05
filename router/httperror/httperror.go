@@ -53,4 +53,3 @@ func InternalError(format string, args ...interface{}) *HTTPError {
 		Code:   http.StatusInternalServerError,
 	}
 }
-

@@ -42,8 +42,9 @@ type Module struct {
 	IsAPIRoute func(req *http.Request) bool
 
 	APIPrefixes []string // paths with this prefix get API errors
-	config      Config
-	server      *http.Server
+
+	config Config
+	server *http.Server
 }
 
 // Init implements service.Init

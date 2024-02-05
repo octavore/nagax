@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/octavore/nagax/util/errors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/octavore/nagax/util/errors"
 )
 
 var jpb = &protojson.MarshalOptions{

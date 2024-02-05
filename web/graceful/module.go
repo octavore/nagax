@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/octavore/naga/service"
+
 	"github.com/octavore/nagax/logger"
 )
 
@@ -24,11 +25,12 @@ type Module struct {
 
 // Init the graceful module
 // Usage: Wait should be called in the main function after Run
-// func main() {
-//   app := &App{}
-//   service.New(app).Run()
-//   app.Graceful.Wait()
-// }
+//
+//	func main() {
+//	  app := &App{}
+//	  service.New(app).Run()
+//	  app.Graceful.Wait()
+//	}
 func (m *Module) Init(c *service.Config) {
 	c.Setup = func() error {
 		ctx := context.Background()

@@ -1,15 +1,17 @@
 /*
-	package slack provides an easy way to read slack credentials
-	from a config file and post (internal) messages to slack.
+package slack provides an easy way to read slack credentials
+from a config file and post (internal) messages to slack.
 
-	```
+```
+
 	{
 		"slack_internal": {
 			"channel": "#activity",
 			"api_token": "..."
 		}
 	}
-	```
+
+```
 */
 package slack
 

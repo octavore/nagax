@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/octavore/naga/service"
+
 	"github.com/octavore/nagax/users/session"
 	"github.com/octavore/nagax/util/memlogger"
 )
