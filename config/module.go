@@ -28,6 +28,8 @@ type Module struct {
 	TestConfigPath string
 
 	configDefs []reflect.Type
+
+	DisableChdir bool
 }
 
 // Init implements the module interface method
@@ -43,11 +45,15 @@ func (m *Module) Init(c *service.Config) {
 			m.ConfigPath = "config.json"
 		}
 
-		err := m.LoadConfig(m.ConfigPath)
 		// we only return an error if production, which
 		// allows this to pass for env=test
+		err := m.LoadConfig(m.ConfigPath)
 		if err != nil {
 			return errIfProduction(c, err)
+		}
+
+		if !m.DisableChdir {
+			return m.chdirConfigPath()
 		}
 		return nil
 	}
@@ -120,9 +126,24 @@ func (m *Module) Resource(resource string) ([]byte, error) {
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	data, err := ioutil.ReadFile(p)
+	data, err := os.ReadFile(p)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 	return data, nil
+}
+
+func (m *Module) chdirConfigPath() error {
+	absConfigPath, err := filepath.Abs(m.ConfigPath)
+	if err != nil {
+		return err
+	}
+
+	configDir := filepath.Dir(absConfigPath)
+	err = os.Chdir(configDir)
+	if err != nil {
+		return err
+	}
+	m.Logger.Infof("config: chdir %s", configDir)
+	return nil
 }
