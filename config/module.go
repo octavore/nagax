@@ -36,6 +36,8 @@ type Module struct {
 
 // Init implements the module interface method
 func (m *Module) Init(c *service.Config) {
+	m.registerCommands(c)
+
 	c.Setup = func() error {
 		m.configDefs = []reflect.Type{}
 		switch {
