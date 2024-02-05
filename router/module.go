@@ -70,7 +70,7 @@ func (m *Module) Init(c *service.Config) {
 
 	c.Start = func() {
 		laddr := m.laddr()
-		m.Logger.Infof("listening on %s", laddr)
+		m.Logger.Infof("router: listening on %s", laddr)
 		m.server = &http.Server{Addr: laddr, Handler: m.Middleware}
 		go m.server.ListenAndServe()
 	}
