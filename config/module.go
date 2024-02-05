@@ -8,6 +8,7 @@ import (
 
 	"github.com/octavore/naga/service"
 
+	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/util/errors"
 )
 
@@ -17,6 +18,8 @@ var ConfigEnv = "CONFIG_FILE"
 
 // Module for config package.
 type Module struct {
+	Logger *logger.Module
+
 	Byte       []byte
 	Env        map[string]string
 	ConfigPath string
@@ -43,6 +46,9 @@ func (m *Module) Init(c *service.Config) {
 		default:
 			m.ConfigPath = "config.json"
 		}
+
+		configAbs, _ := filepath.Abs(m.ConfigPath)
+		m.Logger.Infof("config: %s", configAbs)
 
 		// we only return an error if production, which
 		// allows this to pass for env=test
