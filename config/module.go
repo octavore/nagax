@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -83,7 +82,7 @@ func (m *Module) LoadConfig(path string) error {
 		}
 		return err
 	}
-	m.Byte, err = ioutil.ReadFile(path)
+	m.Byte, err = os.ReadFile(path)
 	if err != nil {
 		return err
 	}
