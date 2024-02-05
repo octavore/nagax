@@ -121,7 +121,7 @@ func (m *Module) ResourcePath(resource string) (string, error) {
 }
 
 func (m *Module) Resource(resource string) ([]byte, error) {
-	p, err := filepath.Abs(filepath.Dir(m.ConfigPath))
+	p, err := m.ResourcePath(resource)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
