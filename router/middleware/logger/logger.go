@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func New(log func(format string, args ...interface{})) func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func New(log func(format string, args ...any)) func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	return func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		t := time.Now()
 		next(rw, req)

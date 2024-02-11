@@ -62,9 +62,9 @@ func (m *Module) Init(c *service.Config) {
 	}
 }
 
-type Printfer func(fmt string, args ...interface{})
+type Printfer func(fmt string, args ...any)
 
-func (p Printfer) Printf(fmt string, args ...interface{}) {
+func (p Printfer) Printf(fmt string, args ...any) {
 	p(fmt, args...)
 }
 

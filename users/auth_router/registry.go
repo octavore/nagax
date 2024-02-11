@@ -19,11 +19,11 @@ import (
 type Route struct {
 	method  string
 	path    string
-	handler interface{}
+	handler any
 	version string
 }
 
-func Register[Req proto.Message, Res proto.Message, A interface{}](
+func Register[Req proto.Message, Res proto.Message, A any](
 	m *Module[A],
 	pathSpec string,
 	handler func(auth *A, par router.Params, reqpb Req) (Res, error),

@@ -15,7 +15,7 @@ func (e *HTTPError) Error() string {
 }
 
 // BadRequest is a helper to return a 400 error
-func BadRequest(format string, args ...interface{}) *HTTPError {
+func BadRequest(format string, args ...any) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusBadRequest,
@@ -23,7 +23,7 @@ func BadRequest(format string, args ...interface{}) *HTTPError {
 }
 
 // NotAuthorized is a helper to return a 401 error
-func NotAuthorized(format string, args ...interface{}) *HTTPError {
+func NotAuthorized(format string, args ...any) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusUnauthorized,
@@ -31,7 +31,7 @@ func NotAuthorized(format string, args ...interface{}) *HTTPError {
 }
 
 // Forbidden is a helper to return a 403 error
-func Forbidden(format string, args ...interface{}) *HTTPError {
+func Forbidden(format string, args ...any) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusForbidden,
@@ -39,7 +39,7 @@ func Forbidden(format string, args ...interface{}) *HTTPError {
 }
 
 // NotFound is a helper to return a 404 error
-func NotFound(format string, args ...interface{}) *HTTPError {
+func NotFound(format string, args ...any) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusNotFound,
@@ -47,7 +47,7 @@ func NotFound(format string, args ...interface{}) *HTTPError {
 }
 
 // Internal is a helper to return a 404 error
-func InternalError(format string, args ...interface{}) *HTTPError {
+func InternalError(format string, args ...any) *HTTPError {
 	return &HTTPError{
 		Detail: fmt.Sprintf(format, args...),
 		Code:   http.StatusInternalServerError,

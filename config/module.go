@@ -99,7 +99,7 @@ func (m *Module) LoadConfig(path string) error {
 
 // ReadConfig json-decodes the config file bytes into i, which should be a pointer
 // to a struct.
-func (m *Module) ReadConfig(i interface{}) error {
+func (m *Module) ReadConfig(i any) error {
 	m.configDefs = append(m.configDefs, reflect.TypeOf(i))
 	return json.Unmarshal(m.Byte, i)
 }

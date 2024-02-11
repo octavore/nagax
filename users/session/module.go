@@ -59,7 +59,7 @@ type Module struct {
 	KeyFile                 string
 	SessionValidityDuration time.Duration
 
-	decryptionKey           interface{}
+	decryptionKey           any
 	encrypter               jose.Encrypter
 	revocationTrackDuration time.Duration
 }

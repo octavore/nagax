@@ -36,7 +36,7 @@ func Proto(rw http.ResponseWriter, status int, pb proto.Message) error {
 }
 
 // JSON renders a response with given status and JSON serialized data
-func JSON(rw http.ResponseWriter, status int, v interface{}) error {
+func JSON(rw http.ResponseWriter, status int, v any) error {
 	if v == nil {
 		return EmptyJSON(rw, status)
 	}

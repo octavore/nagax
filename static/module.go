@@ -37,7 +37,7 @@ type Module struct {
 	staticDirs     []string
 	excluded       []string
 	box            fileSource
-	pageContextFn  func(req *http.Request) interface{}
+	pageContextFn  func(req *http.Request) any
 	cachedIndex    *template.Template
 }
 
@@ -92,7 +92,7 @@ func (m *Module) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	m.ServeAsset(rw, req, p, true)
 }
 
-func (m *Module) getPageContext(req *http.Request) interface{} {
+func (m *Module) getPageContext(req *http.Request) any {
 	if m.pageContextFn != nil {
 		return m.pageContextFn(req)
 	}

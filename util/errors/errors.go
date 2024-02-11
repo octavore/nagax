@@ -8,7 +8,7 @@ import (
 )
 
 // New returns a new wrapped error with m as message
-func New(m string, a ...interface{}) error {
+func New(m string, a ...any) error {
 	return goerrors.Wrap(fmt.Errorf(m, a...), 1)
 }
 

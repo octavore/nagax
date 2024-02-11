@@ -12,7 +12,7 @@ import (
 )
 
 // Module router implements basic routing with helpers for protobuf-rootd responses.
-type Module[AuthSession interface{}] struct {
+type Module[AuthSession any] struct {
 	Logger *logger.Module
 	Config *config.Module
 	Router *router.Module

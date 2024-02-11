@@ -55,7 +55,7 @@ func WithExcludedPrefixes(prefixes ...string) option {
 	}
 }
 
-func WithPageContextFunc(fn func(req *http.Request) interface{}) option {
+func WithPageContextFunc(fn func(req *http.Request) any) option {
 	return func(m *Module) {
 		m.pageContextFn = fn
 	}
