@@ -5,4 +5,4 @@ protos:
 
 goimports:
 	GO_DIRS=$$(find . -name "*.go" -exec dirname {} \; | sort -u); \
-		$$GOPATH/bin/goimports -w -local github.com/octavore/nagax $$GO_DIRS
+		$$GOBIN/goimports -w -local github.com/octavore/nagax $$GO_DIRS
