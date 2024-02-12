@@ -11,8 +11,17 @@ import (
 )
 
 var jpb = &protojson.MarshalOptions{
-	UseEnumNumbers: false,
-	Indent:         "  ",
+	// Multiline:         false,
+	Indent: "  ",
+	// AllowPartial:      false,
+	// UseProtoNames:     false,
+	// UseEnumNumbers:    false,
+	// EmitUnpopulated:   false,
+	EmitDefaultValues: true,
+}
+
+func SetMarshalOptions(opt *protojson.MarshalOptions) {
+	jpb = opt
 }
 
 // ProtoOK renders a 200 response with JSON-serialized proto
