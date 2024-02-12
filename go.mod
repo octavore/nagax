@@ -10,7 +10,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/lib/pq v1.10.9
-	github.com/octavore/naga v1.2.0
+	github.com/octavore/naga v1.3.0
 	github.com/rubenv/sql-migrate v1.6.1
 	github.com/slack-go/slack v0.12.3
 	github.com/stretchr/testify v1.8.4
