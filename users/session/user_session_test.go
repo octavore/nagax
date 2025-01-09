@@ -9,8 +9,7 @@ import (
 )
 
 func TestNewSessionCookie(t *testing.T) {
-	m := &Module{}
-	stop := service.New(m).StartForTest()
+	m, stop := service.New(&Module{}).StartForTest()
 	defer stop()
 
 	cookie, err := m.NewSessionCookie(&UserSession{

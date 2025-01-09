@@ -9,6 +9,7 @@ import (
 
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/router"
+	"github.com/octavore/nagax/router/httperror"
 	csrf2 "github.com/octavore/nagax/users/csrf"
 	"github.com/octavore/nagax/users/session"
 	"github.com/octavore/nagax/util/errors"
@@ -73,7 +74,7 @@ func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *ht
 			csrfToken = req.PostFormValue("csrfToken")
 		}
 		if csrfToken == "" {
-			err := router.NewRequestError(req, http.StatusBadRequest, "csrf token missing")
+			err := httperror.BadRequest("CSRF token missing.")
 			m.Router.HandleError(rw, req, errors.Wrap(err))
 			return
 		}
@@ -83,7 +84,7 @@ func (m *Module) New(ignorePaths ...string) func(rw http.ResponseWriter, req *ht
 			m.Logger.ErrorCtx(req.Context(), errors.Wrap(err))
 		}
 		if !ok {
-			err := router.NewRequestError(req, http.StatusBadRequest, "invalid csrf token")
+			err := httperror.BadRequest("Invalid CSRF token.")
 			m.Router.HandleError(rw, req, errors.Wrap(err))
 			return
 		}

@@ -1,11 +1,12 @@
 package tokenauth
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/octavore/nagax/router"
+	"github.com/octavore/nagax/router/httperror"
 )
 
 type dummyTokenSource map[string]string
@@ -82,7 +83,8 @@ func TestAuthenticateBadToken(t *testing.T) {
 	req.Header.Set(defaultHTTPHeader, "Token badToken")
 	// returns false (not authenticated) with an error
 	b, s, err := m.Authenticate(rw, req)
-	if err != router.ErrNotAuthorized {
+	// todo: compare with httperror.NotAuthorized("Not authorized.")
+	if !errors.Is(err, httperror.NotAuthorized("Not authorized.")) {
 		t.Fatal("unexpected error", err)
 	}
 	if b {

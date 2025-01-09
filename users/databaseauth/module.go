@@ -9,6 +9,7 @@ import (
 
 	"github.com/octavore/nagax/logger"
 	"github.com/octavore/nagax/router"
+	"github.com/octavore/nagax/router/httperror"
 	"github.com/octavore/nagax/users/session"
 	"github.com/octavore/nagax/util/token"
 )
@@ -79,7 +80,7 @@ func (m *Module) handleLogin(rw http.ResponseWriter, req *http.Request, par rout
 		return err
 	}
 	if !valid {
-		return router.ErrNotAuthorized
+		return httperror.HTTPErrorCode(http.StatusUnauthorized)
 	}
 	err = m.Sessions.CreateSession(userID, rw)
 	if err != nil {

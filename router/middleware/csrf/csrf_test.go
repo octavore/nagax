@@ -32,8 +32,7 @@ type testEnv struct {
 }
 
 func setup() testEnv {
-	module := &TestModule{}
-	stop := service.New(module).StartForTest()
+	module, stop := service.New(&TestModule{}).StartForTest()
 	return testEnv{
 		module: module.Module,
 		logger: module.Logger.Logger.(*memlogger.MemoryLogger),

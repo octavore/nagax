@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/octavore/nagax/router"
+	"github.com/octavore/nagax/router/httperror"
 )
 
 type UserTokenKey struct{}
@@ -39,7 +40,7 @@ func (m *Module) MustWithAuthList(authenticators []Authenticator, next router.Ha
 		}
 
 		if !handled || userToken == nil {
-			return router.ErrNotAuthorized
+			return httperror.HTTPErrorCode(http.StatusUnauthorized)
 		}
 
 		ctx := context.WithValue(req.Context(), UserTokenKey{}, *userToken)
