@@ -1,14 +1,12 @@
 package csrf
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/octavore/naga/service"
+	"github.com/shoenig/test"
 
 	"github.com/octavore/nagax/users/session"
 	"github.com/octavore/nagax/util/memlogger"
@@ -70,9 +68,9 @@ func TestNew(t *testing.T) {
 		rr := httptest.NewRecorder()
 		testHandler(rr, req, func(rw http.ResponseWriter, req *http.Request) {})
 		if c.valid {
-			assert.Equal(t, rr.Code, 200, fmt.Sprintf("%s %s should be valid", c.method, c.path))
+			test.Eq(t, rr.Code, 200, test.Sprintf("%s %s should be valid", c.method, c.path))
 		} else {
-			assert.Equal(t, rr.Code, 400, fmt.Sprintf("%s %s should be invalid", c.method, c.path))
+			test.Eq(t, rr.Code, 400, test.Sprintf("%s %s should be invalid", c.method, c.path))
 		}
 	}
 

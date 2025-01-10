@@ -47,7 +47,7 @@ func TestHandleError(t *testing.T) {
 		desc:         "wrapped-error",
 		err:          errWithStack,
 		expectedCode: 500,
-		expectedLog:  `[500] /api/test error-json detail:"" error:"has stack" error-type:*errors.errorString loc:github.com/octavore/nagax/router/handle_error_test.go|26`,
+		expectedLog:  `[500] /api/test error-json detail:"" error:"has stack" error-type:*errors.errorString loc:github.com/octavore/nagax/router/handle_error_test.go|27`,
 		expectedBody: `{
 			"errors": [{
 				"code": 500,
@@ -93,7 +93,7 @@ func TestHandleError(t *testing.T) {
 				"title": "internal_server_error"
 			}]
 		}`,
-		expectedLog: `[500] /api/test error-json detail:"" error:"has stack" error-type:*errors.errorString loc:github.com/octavore/nagax/router/handle_error_test.go|26`,
+		expectedLog: `[500] /api/test error-json detail:"" error:"has stack" error-type:*errors.errorString loc:github.com/octavore/nagax/router/handle_error_test.go|27`,
 	}, {
 		desc:         "httperror-with-custom-error-with-stack",
 		err:          httperror.InternalError().WithDetail("Another message.").WithError(customErrWithStack),
@@ -105,7 +105,7 @@ func TestHandleError(t *testing.T) {
 				"detail":"Another message."
 			}]
 		}`,
-		expectedLog: `[500] /api/test error-json detail:"Another message." error:"custom error" error-type:*router.CustomError loc:github.com/octavore/nagax/router/handle_error_test.go|27`,
+		expectedLog: `[500] /api/test error-json detail:"Another message." error:"custom error" error-type:*router.CustomError loc:github.com/octavore/nagax/router/handle_error_test.go|28`,
 	}}
 
 	for _, tc := range testCases {

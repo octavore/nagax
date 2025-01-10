@@ -3,7 +3,7 @@ package errors
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/shoenig/test"
 )
 
 type TestError struct{}
@@ -14,26 +14,26 @@ func (t *TestError) Error() string {
 
 func TestTypeName(t *testing.T) {
 	err := &TestError{}
-	assert.Equal(t, "*errors.TestError", TypeName(err))
+	test.Eq(t, "*errors.TestError", TypeName(err))
 
 	wrappedErr := Wrap(err)
-	assert.Equal(t, "*errors.TestError", TypeName(wrappedErr))
+	test.Eq(t, "*errors.TestError", TypeName(wrappedErr))
 }
 
 func TestIsType(t *testing.T) {
 	err := &TestError{}
 	wrappedErr := Wrap(err)
-	assert.True(t, IsType(err, wrappedErr))
-	assert.True(t, IsType(wrappedErr, err))
+	test.True(t, IsType(err, wrappedErr))
+	test.True(t, IsType(wrappedErr, err))
 }
 
 func TestWrapNil(t *testing.T) {
-	assert.Equal(t, nil, Wrap(nil))
+	test.Nil(t, Wrap(nil))
 }
 
 func TestDoubleWrap(t *testing.T) {
 	err := &TestError{}
 	wrappedErr := Wrap(err)
 	wrappedErr2 := Wrap(wrappedErr)
-	assert.Equal(t, wrappedErr, wrappedErr2)
+	test.Eq(t, wrappedErr, wrappedErr2)
 }

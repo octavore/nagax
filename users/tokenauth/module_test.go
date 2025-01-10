@@ -1,12 +1,13 @@
 package tokenauth
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/octavore/nagax/router/httperror"
+	"github.com/shoenig/test"
+	"github.com/shoenig/test/must"
 )
 
 type dummyTokenSource map[string]string
@@ -29,35 +30,17 @@ func setup() (*Module, *httptest.ResponseRecorder, *http.Request) {
 }
 
 func TestAuthenticateGoodToken(t *testing.T) {
-	m, rw, req := setup()
-	req.Header.Set(defaultHTTPHeader, "Token goodToken")
-	b, s, err := m.Authenticate(rw, req)
-	if err != nil {
-		t.Fatal("unexpected error", err)
-	}
-	if !b {
-		t.Error("unexpected value", b)
-	}
-	if s == nil {
-		t.Error("unexpected value", s)
-	} else if *s != "1234" {
-		t.Error("unexpected value", *s)
-	}
+	for _, token := range []string{"Token goodToken", "tOkEn goodToken"} {
+		t.Run(token, func(t *testing.T) {
+			m, rw, req := setup()
+			req.Header.Set(defaultHTTPHeader, token)
+			authenticated, userID, err := m.Authenticate(rw, req)
 
-	// different capitalization for prefix
-	m, rw, req = setup()
-	req.Header.Set(defaultHTTPHeader, "tOkEn goodToken")
-	b, s, err = m.Authenticate(rw, req)
-	if err != nil {
-		t.Fatal("unexpected error", err)
-	}
-	if !b {
-		t.Error("unexpected value", b)
-	}
-	if s == nil {
-		t.Error("unexpected value", s)
-	} else if *s != "1234" {
-		t.Error("unexpected value", *s)
+			test.True(t, authenticated, test.Sprint("expected authenticated to be true"))
+			must.NotNil(t, userID)
+			test.Eq(t, *userID, "1234")
+			test.Nil(t, err)
+		})
 	}
 }
 
@@ -66,31 +49,20 @@ func TestAuthenticateBadPrefix(t *testing.T) {
 	req.Header.Set(defaultHTTPHeader, "Basic badToken")
 
 	// returns false (not authenticated) but without an error
-	b, s, err := m.Authenticate(rw, req)
-	if err != nil {
-		t.Fatal("unexpected error", nil)
-	}
-	if b {
-		t.Error("unexpected value", b)
-	}
-	if s != nil {
-		t.Error("unexpected value", *s)
-	}
+	authenticated, userID, err := m.Authenticate(rw, req)
+	test.False(t, authenticated, test.Sprint("expected authenticated to be false"))
+	test.Nil(t, userID, test.Sprint("expected userID to be nil"))
+	test.Nil(t, err)
 }
 
 func TestAuthenticateBadToken(t *testing.T) {
 	m, rw, req := setup()
 	req.Header.Set(defaultHTTPHeader, "Token badToken")
 	// returns false (not authenticated) with an error
-	b, s, err := m.Authenticate(rw, req)
-	// todo: compare with httperror.NotAuthorized("Not authorized.")
-	if !errors.Is(err, httperror.NotAuthorized("Not authorized.")) {
-		t.Fatal("unexpected error", err)
-	}
-	if b {
-		t.Error("unexpected value", b)
-	}
-	if s != nil {
-		t.Error("unexpected value", *s)
-	}
+	authenticated, userID, err := m.Authenticate(rw, req)
+
+	code, _ := httperror.CodeFromErr(err)
+	test.Eq(t, http.StatusUnauthorized, code)
+	test.False(t, authenticated, test.Sprint("expected authenticated to be false"))
+	test.Nil(t, userID, test.Sprint("expected userID to be nil"))
 }

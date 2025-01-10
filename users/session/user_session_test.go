@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/octavore/naga/service"
-	"github.com/stretchr/testify/assert"
+	"github.com/shoenig/test"
 )
 
 func TestNewSessionCookie(t *testing.T) {
@@ -16,12 +16,12 @@ func TestNewSessionCookie(t *testing.T) {
 		ID:        "abc",
 		SessionID: "123",
 	})
-	assert.NoError(t, err)
-	assert.Equal(t, "session", cookie.Name)
-	assert.Equal(t, "", cookie.Domain)
-	assert.Equal(t, http.SameSiteLaxMode, cookie.SameSite)
-	assert.Equal(t, "/", cookie.Path)
+	test.NoError(t, err)
+	test.Eq(t, "session", cookie.Name)
+	test.Eq(t, "", cookie.Domain)
+	test.Eq(t, http.SameSiteLaxMode, cookie.SameSite)
+	test.Eq(t, "/", cookie.Path)
 
 	session := m.decodeCookieValue(cookie.Value)
-	assert.Equal(t, &UserSession{ID: "abc", SessionID: "123"}, session)
+	test.Eq(t, &UserSession{ID: "abc", SessionID: "123"}, session)
 }
